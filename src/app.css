@@ -1,3 +1,210 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+/* Import Local Fonts - Technor */
+@font-face {
+  font-family: 'Technor';
+  src: url('$lib/assets/fonts/technor/Technor-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Technor';
+  src: url('$lib/assets/fonts/technor/Technor-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Technor';
+  src: url('$lib/assets/fonts/technor/Technor-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Technor';
+  src: url('$lib/assets/fonts/technor/Technor-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Technor';
+  src: url('$lib/assets/fonts/technor/Technor-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* Import Local Fonts - Supreme */
+@font-face {
+  font-family: 'Supreme';
+  src: url('$lib/assets/fonts/supreme/Supreme-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Supreme';
+  src: url('$lib/assets/fonts/supreme/Supreme-LightItalic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Supreme';
+  src: url('$lib/assets/fonts/supreme/Supreme-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Supreme';
+  src: url('$lib/assets/fonts/supreme/Supreme-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Supreme';
+  src: url('$lib/assets/fonts/supreme/Supreme-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Supreme';
+  src: url('$lib/assets/fonts/supreme/Supreme-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* Monochrome Design System */
+:root {
+  --black: #000000;
+  --white: #ffffff;
+  --grey-soft: #b3b3b3;
+  --grey-faint: rgba(255, 255, 255, 0.05);
+  --white-glow: rgba(255, 255, 255, 0.2);
+
+  --font-heading: 'Technor', sans-serif;
+  --font-body: 'Supreme', sans-serif;
+
+  --ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto; /* Lenis will handle this */
+}
+
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--white);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--grey-soft);
+}
+
+/* Focus styles for accessibility */
+a:focus, button:focus, input:focus, textarea:focus {
+  outline: 2px solid var(--white);
+  outline-offset: 2px;
+}
+
+/* Global transitions */
+a, button {
+  transition: all 0.3s var(--ease);
+}
+
+/* Glass effect utility */
+.glass {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid var(--white);
+  border-radius: 24px;
+  backdrop-filter: blur(10px);
+}
+
+/* White glow effect */
+.glow {
+  box-shadow: 0 0 20px var(--white-glow), 0 0 40px var(--white-glow);
+}
+
+/* Smooth animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drawLine {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Selection color */
+::selection {
+  background: var(--white);
+  color: var(--black);
+}

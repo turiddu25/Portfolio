@@ -1,0 +1,249 @@
+<script>
+	import { createEventDispatcher } from 'svelte';
+	import { fade, scale } from 'svelte/transition';
+
+	export let project;
+
+	const dispatch = createEventDispatcher();
+
+	function closeModal() {
+		dispatch('close');
+	}
+
+	function handleKeydown(e) {
+		if (e.key === 'Escape') {
+			closeModal();
+		}
+	}
+</script>
+
+<svelte:window on:keydown={handleKeydown} />
+
+<div class="modal-backdrop" transition:fade={{ duration: 300 }} on:click={closeModal}>
+	<div class="modal-content" transition:scale={{ duration: 300, start: 0.9 }} on:click|stopPropagation>
+		<button class="close-button" on:click={closeModal}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M18 6L6 18M6 6l12 12"/>
+			</svg>
+		</button>
+
+		<div class="modal-image">
+			<img src={project.image} alt={project.title} />
+		</div>
+
+		<div class="modal-body">
+			<h2>{project.title}</h2>
+			<p class="description">{project.details}</p>
+
+			<div class="tech-stack">
+				<h3>Technologies</h3>
+				<div class="tech-tags">
+					{#each project.tech as tech}
+						<span class="tech-tag">{tech}</span>
+					{/each}
+				</div>
+			</div>
+
+			<div class="modal-actions">
+				<button class="action-button">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+					</svg>
+					View Code
+				</button>
+				<button class="action-button primary">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>
+					</svg>
+					Live Demo
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+	.modal-backdrop {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(0, 0, 0, 0.9);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+		padding: 2rem;
+		backdrop-filter: blur(8px);
+	}
+
+	.modal-content {
+		position: relative;
+		max-width: 900px;
+		width: 100%;
+		max-height: 90vh;
+		background: var(--black);
+		border: 2px solid var(--white);
+		border-radius: 24px;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.close-button {
+		position: absolute;
+		top: 1.5rem;
+		right: 1.5rem;
+		width: 48px;
+		height: 48px;
+		background: rgba(0, 0, 0, 0.8);
+		border: 1px solid var(--white);
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		color: var(--white);
+		transition: all 0.3s var(--ease);
+		z-index: 10;
+	}
+
+	.close-button:hover {
+		background: var(--white);
+		color: var(--black);
+		transform: rotate(90deg);
+	}
+
+	.modal-image {
+		width: 100%;
+		height: 300px;
+		overflow: hidden;
+		border-bottom: 1px solid var(--white);
+	}
+
+	.modal-image img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.modal-body {
+		padding: 2.5rem;
+		overflow-y: auto;
+	}
+
+	.modal-body::-webkit-scrollbar {
+		width: 6px;
+	}
+
+	.modal-body::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.modal-body::-webkit-scrollbar-thumb {
+		background: rgba(255, 255, 255, 0.2);
+		border-radius: 3px;
+	}
+
+	.modal-body h2 {
+		font-size: 2rem;
+		margin-bottom: 1rem;
+		color: var(--white);
+	}
+
+	.description {
+		font-size: 1.1rem;
+		line-height: 1.8;
+		color: var(--grey-soft);
+		margin-bottom: 2rem;
+	}
+
+	.tech-stack h3 {
+		font-size: 1rem;
+		font-weight: 600;
+		color: var(--white);
+		margin-bottom: 1rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.tech-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin-bottom: 2rem;
+	}
+
+	.tech-tag {
+		padding: 0.5rem 1rem;
+		background: transparent;
+		border: 1px solid var(--white);
+		border-radius: 20px;
+		font-size: 0.9rem;
+		color: var(--white);
+		font-family: var(--font-heading);
+	}
+
+	.modal-actions {
+		display: flex;
+		gap: 1rem;
+	}
+
+	.action-button {
+		flex: 1;
+		padding: 1rem 1.5rem;
+		background: transparent;
+		border: 2px solid var(--white);
+		border-radius: 12px;
+		color: var(--white);
+		font-family: var(--font-heading);
+		font-weight: 600;
+		font-size: 1rem;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		transition: all 0.3s var(--ease);
+	}
+
+	.action-button:hover {
+		background: var(--white);
+		color: var(--black);
+		transform: translateY(-2px);
+	}
+
+	.action-button.primary {
+		background: var(--white);
+		color: var(--black);
+	}
+
+	.action-button.primary:hover {
+		background: transparent;
+		color: var(--white);
+		box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+	}
+
+	@media (max-width: 768px) {
+		.modal-backdrop {
+			padding: 1rem;
+		}
+
+		.modal-body {
+			padding: 1.5rem;
+		}
+
+		.modal-body h2 {
+			font-size: 1.5rem;
+		}
+
+		.modal-actions {
+			flex-direction: column;
+		}
+
+		.modal-image {
+			height: 200px;
+		}
+	}
+</style>
