@@ -42,7 +42,7 @@
 		padding: 4rem 2rem;
 		position: relative;
 		background: var(--black);
-		z-index: 1;
+		z-index: 10;
 	}
 
 	.container {
