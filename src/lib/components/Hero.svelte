@@ -15,18 +15,43 @@
 
 	const LOGO_FLOAT_AMOUNT = 0.1;
 
+	// ===== HEAD POSITIONING CONFIG =====
+	// Customize these values for desktop and mobile!
+	const HEAD_POSITIONS = {
+		desktop: { x: -1, y: 0 },
+		mobile: { x: 0, y: 0.4 }  // Mobile head position (customize this!)
+	};
+	// ===================================
+
+	// ===== HEAD & LOGO SCALE CONFIG =====
+	// Customize scale (size) for desktop and mobile!
+	const HEAD_SCALE = {
+		desktop: 3.6 * 0.7,  // Desktop head size
+		mobile: 2.2 * 0.7    // Mobile head size (customize this!)
+	};
+
+	const LOGO_SCALE_MULTIPLIER = {
+		desktop: 1.0,  // Desktop logo size (1.0 = normal)
+		mobile: 0.7    // Mobile logo size multiplier (customize this!)
+	};
+	// ====================================
+
 	function getResponsiveScale() {
 		const width = window.innerWidth;
-		if (width < 480) return 2.2 * 0.7;
-		if (width < 768) return 2.8 * 0.7;
-		if (width < 1024) return 3.2 * 0.7;
-		return 3.6 * 0.7;
+		if (width < 768) return HEAD_SCALE.mobile;
+		return HEAD_SCALE.desktop;
+	}
+
+	function getLogoScaleMultiplier() {
+		const width = window.innerWidth;
+		if (width < 768) return LOGO_SCALE_MULTIPLIER.mobile;
+		return LOGO_SCALE_MULTIPLIER.desktop;
 	}
 
 	function getResponsivePosition() {
 		const width = window.innerWidth;
-		if (width < 768) return { x: 0, y: -0.3 };
-		return { x: -1, y: 0 };
+		if (width < 768) return HEAD_POSITIONS.mobile;
+		return HEAD_POSITIONS.desktop;
 	}
 
 	onMount(() => {
@@ -135,13 +160,46 @@
 	}
 
 	function loadLogos(loader) {
+		// Desktop positions
 		const logoFiles = [
-			{ file: '/c.glb', scale: 0.01, x: 1.3, y: 1.3, z: 0, rotationY: -Math.PI / 6 },
-			{ file: '/css_logo_3d_model.glb', scale: 1, x: 1.6, y: 1.3, z: 0.8 },
-			{ file: '/html_logo_3d_model.glb', scale: 0.3, x: 0, y: 1.5, z: 1 },
-			{ file: '/java.glb', scale: 0.2, x: -1.1, y: 1.1, z: 0.8 },
-			{ file: '/python.glb', scale: 0.01, x: -1.6, y: 0, z: 0 },
-			{ file: '/react_logo.glb', scale: 0.17, x: 1.1, y: -1.3, z: 0.8 }
+			{ 
+				file: '/c.glb', 
+				scale: 0.01, 
+				x: 1.3, y: 1.3, z: 0, 
+				rotationY: -Math.PI / 6,
+				// Mobile positions (customize these!)
+				mobileX: 0.5, mobileY: 1.1, mobileZ: 0
+			},
+			{ 
+				file: '/css_logo_3d_model.glb', 
+				scale: 1, 
+				x: 1.6, y: 1.3, z: 0.8,
+				mobileX: 1.2, mobileY: 1.5, mobileZ: 0.5
+			},
+			{ 
+				file: '/html_logo_3d_model.glb', 
+				scale: 0.3, 
+				x: 0, y: 1.5, z: 1,
+				mobileX: 0, mobileY: 1.5, mobileZ: 0.8
+			},
+			{ 
+				file: '/java.glb', 
+				scale: 0.2, 
+				x: -1.1, y: 1.1, z: 0.8,
+				mobileX: -0.6, mobileY: 0.9, mobileZ: 0.5
+			},
+			{ 
+				file: '/python.glb', 
+				scale: 0.01, 
+				x: -1.4, y: 0, z: 0,
+				mobileX: -0.8, mobileY: 0, mobileZ: 0
+			},
+			{ 
+				file: '/react_logo.glb', 
+				scale: 0.15, 
+				x: 1.1, y: -1.0, z: 0.8,
+				mobileX: 0.7, mobileY: -0.3, mobileZ: 0.5
+			}
 		];
 
 		logoFiles.forEach((data) => {
@@ -159,13 +217,24 @@
 						}
 					});
 
-					logo.scale.set(data.scale, data.scale, data.scale);
-					logo.position.set(data.x, data.y, data.z);
+					const scaleMultiplier = getLogoScaleMultiplier();
+					const finalScale = data.scale * scaleMultiplier;
+					logo.scale.set(finalScale, finalScale, finalScale);
+					
+					// Use mobile or desktop positions based on screen size
+					const isMobile = window.innerWidth < 768;
+					const posX = isMobile ? data.mobileX : data.x;
+					const posY = isMobile ? data.mobileY : data.y;
+					const posZ = isMobile ? data.mobileZ : data.z;
+					
+					logo.position.set(posX, posY, posZ);
 					if (data.rotationY !== undefined) logo.rotation.y = data.rotationY;
 
 					logos.push({
 						mesh: logo,
-						originalPos: { x: data.x, y: data.y, z: data.z },
+						data: data, // Store original data for resize
+						baseScale: data.scale, // Store base scale for resize
+						originalPos: { x: posX, y: posY, z: posZ },
 						originalRotation: { y: data.rotationY || 0 },
 						floatSpeed: 0.2 + Math.random() * 0.5,
 						floatOffset: Math.random() * Math.PI * 2,
@@ -246,7 +315,11 @@
 
 		// Subtle 3D head entrance
 		if (headGroup) {
-			gsap.from(headGroup.position, { y: headGroup.position.y - 0.5, duration: 1.8, delay: 0.6, ease: 'power2.out' });
+			const finalPos = getResponsivePosition();
+			gsap.fromTo(headGroup.position, 
+				{ x: finalPos.x, y: finalPos.y - 0.5, z: 0 },
+				{ x: finalPos.x, y: finalPos.y, z: 0, duration: 1.8, delay: 0.6, ease: 'power2.out' }
+			);
 			gsap.from(headGroup.scale, {
 				x: 0.7,
 				y: 0.7,
@@ -281,6 +354,23 @@
 			headGroup.position.x = pos.x;
 			headGroup.position.y = pos.y;
 		}
+		
+		// Update logo positions and scales for responsive layout
+		const isMobile = window.innerWidth < 768;
+		logos.forEach((logoObj) => {
+			if (logoObj.data) {
+				// Update position
+				const posX = isMobile ? logoObj.data.mobileX : logoObj.data.x;
+				const posY = isMobile ? logoObj.data.mobileY : logoObj.data.y;
+				const posZ = isMobile ? logoObj.data.mobileZ : logoObj.data.z;
+				logoObj.originalPos = { x: posX, y: posY, z: posZ };
+				
+				// Update scale
+				const scaleMultiplier = getLogoScaleMultiplier();
+				const finalScale = logoObj.baseScale * scaleMultiplier;
+				logoObj.mesh.scale.set(finalScale, finalScale, finalScale);
+			}
+		});
 	}
 
 	function handleScroll() {}
@@ -589,8 +679,8 @@
 			align-items: center;
 			padding-right: 5%;
 			padding-left: 5%;
-			justify-content: center;
-			padding-top: 0;
+			justify-content: flex-end;
+			padding-bottom: 8rem;
 		}
 
 		.name-line {
@@ -620,8 +710,8 @@
 		.hero-content {
 			padding-right: 1rem;
 			padding-left: 1rem;
-			justify-content: center;
-			padding-top: 0;
+			justify-content: flex-end;
+			padding-bottom: 7rem;
 		}
 
 		.name-line {
