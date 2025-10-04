@@ -3,20 +3,18 @@
 	import * as THREE from 'three';
 	import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 	import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-	import gsap from 'gsap';
+	import { gsap } from 'gsap';
 
 	let canvas;
 	let scene, camera, renderer, head;
 	let headLoaded = false;
-	let logos = []; // Store logo objects with their animation data
-	let headGroup; // Group containing head and logos
-	let headFloatOffset = Math.random() * Math.PI * 2; // Random offset for head float
+	let logos = [];
+	let headGroup;
+	let headFloatOffset = Math.random() * Math.PI * 2;
+	let isSceneReady = false;
 
-	// ===== CONFIGURATION =====
-	const LOGO_FLOAT_AMOUNT = 0.1; // How much logos float (0.1-0.5 recommended)
-	// =========================
+	const LOGO_FLOAT_AMOUNT = 0.1;
 
-	// Responsive scale and position helpers
 	function getResponsiveScale() {
 		const width = window.innerWidth;
 		if (width < 480) return 2.2 * 0.7;
@@ -32,46 +30,18 @@
 	}
 
 	onMount(() => {
-		initScene();
-		animate();
+		// Moved this line inside onMount
+		document.body.classList.add('loading');
 
+		initScene();
 		window.addEventListener('resize', onResize);
 		window.addEventListener('scroll', handleScroll);
-
 		return () => {
 			window.removeEventListener('resize', onResize);
 			window.removeEventListener('scroll', handleScroll);
 			if (renderer) renderer.dispose();
 		};
 	});
-
-	function playIntroAnimation() {
-		const finalHeadScale = getResponsiveScale();
-		const tl = gsap.timeline();
-
-		// 1. Animate head scaling into view
-		tl.to(head.scale, {
-			x: finalHeadScale,
-			y: finalHeadScale,
-			z: finalHeadScale,
-			duration: 1.5,
-			ease: 'expo.out'
-		});
-
-		// 2. Animate logos flying into their final positions with a stagger
-		tl.to(
-			logos.map((l) => l.mesh.position),
-			{
-				x: (i) => logos[i].originalPos.x,
-				y: (i) => logos[i].originalPos.y,
-				z: (i) => logos[i].originalPos.z,
-				duration: 1.5,
-				ease: 'expo.out',
-				stagger: 0.08
-			},
-			'-=1.3' // Overlap animations for a smoother sequence
-		);
-	}
 
 	function scrollToProjects() {
 		const projectsSection = document.querySelector('.chat-projects-section');
@@ -82,16 +52,23 @@
 		}
 	}
 
+	function warmUpRenderer() {
+		for (let i = 0; i < 10; i++) {
+			renderer.render(scene, camera);
+		}
+	}
+
 	function initScene() {
-		// ===== Preloading Setup =====
-		const loadingManager = new THREE.LoadingManager();
-		loadingManager.onLoad = () => {
-			// Trigger animation once all managed assets are loaded
-			playIntroAnimation();
+		const manager = new THREE.LoadingManager();
+		manager.onLoad = () => {
+			warmUpRenderer();
+			isSceneReady = true;
+			startHeroReveal();
+			animate();
 		};
-		const gltfLoader = new GLTFLoader(loadingManager);
-		const rgbeLoader = new RGBELoader(loadingManager);
-		// ============================
+
+		const gltfLoader = new GLTFLoader(manager);
+		const rgbeLoader = new RGBELoader(manager);
 
 		scene = new THREE.Scene();
 		camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -100,7 +77,6 @@
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-		// Load environment map
 		rgbeLoader.load(
 			'/studio_small_03_1k.hdr',
 			(texture) => {
@@ -108,10 +84,9 @@
 				scene.environment = texture;
 			},
 			undefined,
-			(error) => console.error('An error occurred loading the environment map.', error)
+			(error) => console.error('Error loading HDR:', error)
 		);
 
-		// Lighting setup (intensities already increased)
 		const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
 		scene.add(ambientLight);
 		const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
@@ -127,7 +102,6 @@
 		backLight.position.set(0, 0, -3);
 		scene.add(backLight);
 
-		// Load head model
 		gltfLoader.load(
 			'/head.glb',
 			(gltf) => {
@@ -139,43 +113,40 @@
 							roughness: 0.4,
 							metalness: 0.9
 						});
-						child.material.needsUpdate = true;
 					}
 				});
 
 				headGroup = new THREE.Group();
 				const pos = getResponsivePosition();
 				headGroup.position.set(pos.x, pos.y, 0);
-
-				// Set initial state for animation: start scaled to 0
-				head.scale.set(0, 0, 0);
+				head.scale.set(getResponsiveScale(), getResponsiveScale(), getResponsiveScale());
 				head.rotation.set(0, Math.PI, 0);
-
 				headGroup.add(head);
 				scene.add(headGroup);
 				headLoaded = true;
-				loadLogos(gltfLoader); // Pass loader with manager to logos
+				loadLogos(gltfLoader);
 			},
 			undefined,
-			(error) => console.error('Error loading model:', error)
+			(error) => console.error('Error loading head:', error)
 		);
 
 		addBackgroundGrid();
+		animate();
 	}
 
 	function loadLogos(loader) {
 		const logoFiles = [
 			{ file: '/c.glb', scale: 0.01, x: 1.3, y: 1.3, z: 0, rotationY: -Math.PI / 6 },
-			{ file: '/css_logo_3d_model.glb', scale: 1, x: 1.6, y: 1.3, z: 0.8, rotationY: 0 },
-			{ file: '/html_logo_3d_model.glb', scale: 0.3, x: 0, y: 1.5, z: 1, rotationY: 0 },
-			{ file: '/java.glb', scale: 0.2, x: -1.1, y: 1.1, z: 0.8, rotationY: 0 },
-			{ file: '/python.glb', scale: 0.01, x: -1.6, y: 0, z: 0, rotationY: 0 },
-			{ file: '/react_logo.glb', scale: 0.17, x: 1.1, y: -1.3, z: 0.8, rotationY: 0 }
+			{ file: '/css_logo_3d_model.glb', scale: 1, x: 1.6, y: 1.3, z: 0.8 },
+			{ file: '/html_logo_3d_model.glb', scale: 0.3, x: 0, y: 1.5, z: 1 },
+			{ file: '/java.glb', scale: 0.2, x: -1.1, y: 1.1, z: 0.8 },
+			{ file: '/python.glb', scale: 0.01, x: -1.6, y: 0, z: 0 },
+			{ file: '/react_logo.glb', scale: 0.17, x: 1.1, y: -1.3, z: 0.8 }
 		];
 
-		logoFiles.forEach((logoData) => {
+		logoFiles.forEach((data) => {
 			loader.load(
-				logoData.file,
+				data.file,
 				(gltf) => {
 					const logo = gltf.scene;
 					logo.traverse((child) => {
@@ -185,37 +156,106 @@
 								roughness: 0.1,
 								metalness: 0.95
 							});
-							child.material.needsUpdate = true;
 						}
 					});
 
-					const scale = logoData.scale;
-					logo.scale.set(scale, scale, scale);
+					logo.scale.set(data.scale, data.scale, data.scale);
+					logo.position.set(data.x, data.y, data.z);
+					if (data.rotationY !== undefined) logo.rotation.y = data.rotationY;
 
-					// Set initial state for animation: start far off-screen
-					const finalPos = new THREE.Vector3(logoData.x, logoData.y, logoData.z);
-					logo.position.set(finalPos.x * 4, finalPos.y * 3 + 5, finalPos.z - 20);
-
-					if (logoData.rotationY !== undefined) {
-						logo.rotation.y = logoData.rotationY;
-					}
-
-					const logoObj = {
+					logos.push({
 						mesh: logo,
-						originalPos: { x: logoData.x, y: logoData.y, z: logoData.z },
-						originalRotation: { x: 0, y: logoData.rotationY || 0, z: 0 },
+						originalPos: { x: data.x, y: data.y, z: data.z },
+						originalRotation: { y: data.rotationY || 0 },
 						floatSpeed: 0.2 + Math.random() * 0.5,
 						floatOffset: Math.random() * Math.PI * 2,
 						floatAmount: LOGO_FLOAT_AMOUNT + Math.random() * LOGO_FLOAT_AMOUNT * 0.5,
 						rotationSpeed: 0.1 + Math.random() * 0.15
-					};
-					logos.push(logoObj);
+					});
+
 					headGroup.add(logo);
 				},
 				undefined,
-				(error) => console.error(`Error loading logo ${logoData.file}:`, error)
+				(err) => console.error(`Error loading ${data.file}:`, err)
 			);
 		});
+	}
+
+	function handleSceneReady() {
+		isSceneReady = true;
+		startHeroReveal();
+	}
+
+	function startHeroReveal() {
+		// Smoothly fade out preloader first
+		const preloader = document.querySelector('.preloader');
+		if (preloader) {
+			gsap.to(preloader, {
+				opacity: 0,
+				duration: 0.8,
+				ease: 'power2.inOut',
+				onComplete: () => {
+					preloader.remove();
+					document.body.classList.remove('loading');
+				}
+			});
+		}
+
+		// After preloader starts fading, reveal content
+		gsap.to(canvas, { opacity: 1, duration: 1.5, delay: 0.5, ease: 'power2.out' });
+
+		// Animate text lines with proper delays
+		const lines = document.querySelectorAll('.name-line');
+		lines.forEach((line, i) => {
+			gsap.fromTo(
+				line,
+				{ opacity: 0, x: 30 },
+				{ opacity: 1, x: 0, duration: 1.2, delay: 0.8 + i * 0.2, ease: 'power2.out' }
+			);
+		});
+
+		// Animate underline
+		const underline = document.querySelector('.underline');
+		if (underline) {
+			gsap.fromTo(
+				underline,
+				{ width: '0%' },
+				{ width: '100%', duration: 1.2, delay: 1.8, ease: 'power2.out' }
+			);
+		}
+
+		// Animate CV button
+		const cvButton = document.querySelector('.cv-button');
+		if (cvButton) {
+			gsap.fromTo(
+				cvButton,
+				{ opacity: 0, x: 30 },
+				{ opacity: 1, x: 0, duration: 1.2, delay: 1.6, ease: 'power2.out' }
+			);
+		}
+
+		// Animate scroll indicator
+		const scrollIndicator = document.querySelector('.scroll-indicator');
+		if (scrollIndicator) {
+			gsap.fromTo(
+				scrollIndicator,
+				{ opacity: 0 },
+				{ opacity: 1, duration: 1.5, delay: 2.2, ease: 'power2.out' }
+			);
+		}
+
+		// Subtle 3D head entrance
+		if (headGroup) {
+			gsap.from(headGroup.position, { y: headGroup.position.y - 0.5, duration: 1.8, delay: 0.6, ease: 'power2.out' });
+			gsap.from(headGroup.scale, {
+				x: 0.7,
+				y: 0.7,
+				z: 0.7,
+				duration: 1.8,
+				delay: 0.6,
+				ease: 'power2.out'
+			});
+		}
 	}
 
 	function addBackgroundGrid() {
@@ -225,12 +265,7 @@
 			vertices.push(Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 2 - 5);
 		}
 		geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-		const material = new THREE.PointsMaterial({
-			color: 0xffffff,
-			size: 0.05,
-			transparent: true,
-			opacity: 0.05
-		});
+		const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, transparent: true, opacity: 0.05 });
 		const points = new THREE.Points(geometry, material);
 		scene.add(points);
 	}
@@ -242,95 +277,42 @@
 		if (head && headLoaded && headGroup) {
 			const newScale = getResponsiveScale();
 			const pos = getResponsivePosition();
-			// Only update scale if animation is not running or finished
-			if (gsap.globalTimeline.getChildren().every((t) => t.progress() === 1)) {
-				head.scale.set(newScale, newScale, newScale);
-			}
+			head.scale.set(newScale, newScale, newScale);
 			headGroup.position.x = pos.x;
 			headGroup.position.y = pos.y;
 		}
 	}
 
-	function handleScroll() {
-		if (!canvas || !headGroup || !camera) return;
-		const scrollY = window.scrollY;
-		const heroSection = document.querySelector('.hero-section');
-		const chatSection = document.querySelector('.chat-projects-section');
-		if (heroSection && chatSection) {
-			const heroHeight = heroSection.offsetHeight;
-			const chatOffset = chatSection.offsetTop;
-			const scrollProgress = Math.min(scrollY / heroHeight, 1);
-			const moveStart = 0.3;
-			const moveEnd = 1.2;
-			if (scrollProgress > moveStart) {
-				const moveProgress = Math.min((scrollProgress - moveStart) / (moveEnd - moveStart), 1);
-				const eased = 1 - Math.pow(1 - moveProgress, 3);
-				const startPos = getResponsivePosition();
-				const width = window.innerWidth;
-				let targetX, targetY, targetScale;
-				if (width < 768) {
-					targetX = 0;
-					targetY = 1.5;
-					targetScale = 1.8;
-				} else {
-					targetX = -3.5;
-					targetY = 0.5;
-					targetScale = 2.4;
-				}
-				headGroup.position.x = startPos.x + (targetX - startPos.x) * eased;
-				headGroup.position.y = startPos.y + (targetY - startPos.y) * eased;
-				const startScale = getResponsiveScale();
-				const newScale = startScale + (targetScale - startScale) * eased;
-				head.scale.set(newScale, newScale, newScale);
-				canvas.style.opacity = '1';
-				const maxTranslate = chatOffset - heroHeight;
-				const translateY = Math.min(scrollY - heroHeight, maxTranslate);
-				canvas.style.transform = `translateY(${translateY}px)`;
-			} else {
-				const pos = getResponsivePosition();
-				headGroup.position.x = pos.x;
-				headGroup.position.y = pos.y;
-				const scale = getResponsiveScale();
-				// Only update scale if animation is not running or finished
-				if (gsap.globalTimeline.getChildren().every((t) => t.progress() === 1)) {
-					head.scale.set(scale, scale, scale);
-				}
-				canvas.style.opacity = '1';
-				canvas.style.transform = 'translateY(0)';
-			}
-		}
-	}
+	function handleScroll() {}
 
 	function animate() {
 		requestAnimationFrame(animate);
+		if (!isSceneReady) return; // <— prevents early renders
 		const time = Date.now() * 0.001;
+
 		if (head && headLoaded) {
 			const headFloatY = Math.sin(time * 0.3 + headFloatOffset) * 0.08;
 			const headDriftX = Math.cos(time * 0.25 + headFloatOffset) * 0.05;
 			head.position.x = headDriftX;
 			head.position.y = headFloatY;
-			head.position.z = 0;
-			const rotationAmount = Math.sin(time * 0.2 + headFloatOffset) * 0.05;
-			head.rotation.y = Math.PI + rotationAmount;
+			head.rotation.y = Math.PI + Math.sin(time * 0.2 + headFloatOffset) * 0.05;
 		}
 
-		// Only start floating logos after the intro animation is complete
-		if (gsap.globalTimeline.getChildren().every((t) => t.progress() === 1)) {
-			logos.forEach((logoObj) => {
-				const { mesh, originalPos, floatSpeed, floatOffset, floatAmount, rotationSpeed, originalRotation } = logoObj;
-				const floatY = Math.sin(time * floatSpeed + floatOffset) * floatAmount;
-				const driftX = Math.cos(time * floatSpeed * 0.7 + floatOffset) * floatAmount * 0.5;
-				const driftZ = Math.sin(time * floatSpeed * 0.5 + floatOffset) * floatAmount * 0.3;
-				mesh.position.x = originalPos.x + driftX;
-				mesh.position.y = originalPos.y + floatY;
-				mesh.position.z = originalPos.z + driftZ;
-				const rotationAmount = Math.sin(time * rotationSpeed + floatOffset) * 0.1;
-				mesh.rotation.y = originalRotation.y + rotationAmount;
-			});
-		}
+		logos.forEach((obj) => {
+			const { mesh, originalPos, floatSpeed, floatOffset, floatAmount, rotationSpeed, originalRotation } = obj;
+			mesh.position.y = originalPos.y + Math.sin(time * floatSpeed + floatOffset) * floatAmount;
+			mesh.position.x = originalPos.x + Math.cos(time * floatSpeed * 0.7 + floatOffset) * floatAmount * 0.5;
+			mesh.position.z = originalPos.z + Math.sin(time * floatSpeed * 0.5 + floatOffset) * floatAmount * 0.3;
+			mesh.rotation.y = originalRotation.y + Math.sin(time * rotationSpeed + floatOffset) * 0.1;
+		});
+
 		renderer.render(scene, camera);
 	}
 </script>
+
+<div class="preloader">
+	<span>Loading...</span>
+</div>
 
 <section class="hero-section">
 	<canvas bind:this={canvas} class="webgl-canvas"></canvas>
@@ -365,6 +347,31 @@
 </section>
 
 <style>
+	:global(body.loading) {
+		overflow: hidden !important;
+		height: 100vh;
+		position: fixed;
+		width: 100%;
+	}
+	:global(body:not(.loading)) {
+		overflow: auto;
+		position: static;
+	}
+
+	.preloader {
+		position: fixed;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: black;
+		color: white;
+		z-index: 9999;
+		font-family: var(--font-heading);
+		font-size: 1.2rem;
+		opacity: 1;
+	}
+
 	.hero-section {
 		position: relative;
 		width: 100%;
@@ -373,18 +380,14 @@
 	}
 
 	.webgl-canvas {
-		position: fixed;
+		position: absolute;
 		top: 0;
 		left: 0;
 		width: 100%;
 		height: 100%;
-		z-index: 999;
+		z-index: 1;
 		pointer-events: none;
 		opacity: 0;
-		animation: smoothFadeIn 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-		animation-delay: 0.3s;
-		will-change: transform, opacity;
-		transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
 	}
 
 	.hero-content {
@@ -406,13 +409,11 @@
 		font-size: clamp(3rem, 8vw, 7rem);
 		margin: 0;
 		opacity: 0;
-		animation: smoothFadeInRight 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 	}
 
 	.name-line-1 {
 		font-weight: 700;
 		color: var(--white);
-		animation-delay: 0.5s;
 		margin-left: 0;
 	}
 
@@ -420,14 +421,12 @@
 		font-weight: 700;
 		font-style: italic;
 		color: var(--grey-soft);
-		animation-delay: 0.8s;
 		margin-left: 2rem;
 	}
 
 	.name-line-3 {
 		font-weight: 700;
 		color: var(--white);
-		animation-delay: 1.1s;
 		position: relative;
 		margin-left: 0;
 	}
@@ -439,8 +438,6 @@
 		height: 3px;
 		background: var(--white);
 		width: 0;
-		animation: drawLine 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-		animation-delay: 1.6s;
 	}
 
 	.cv-button {
@@ -454,8 +451,6 @@
 		border-radius: 50px;
 		cursor: pointer;
 		opacity: 0;
-		animation: smoothFadeInRight 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-		animation-delay: 1.4s;
 		position: relative;
 		overflow: hidden;
 	}
@@ -512,9 +507,7 @@
 		color: var(--white);
 		cursor: pointer;
 		opacity: 0;
-		animation: smoothFadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards,
-			float 3s ease-in-out infinite;
-		animation-delay: 2s, 3.5s;
+		animation: float 3s ease-in-out infinite;
 	}
 
 	.scroll-text {

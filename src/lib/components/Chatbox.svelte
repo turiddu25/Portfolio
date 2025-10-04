@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 
 	let messages = [
-		{ role: 'ai', text: 'Hey! I\'m Colin\'s AI assistant. Ask me anything about his work!' },
+		{ role: 'ai', text: 'Hey! I\'m Colin\'s AI Clone. Ask me anything about his work!' },
 	];
 	let inputValue = '';
 	let isTyping = false;
@@ -70,7 +70,7 @@
 <div class="chatbox glass">
 	<div class="chat-header">
 		<div class="status-indicator"></div>
-		<span>AI Assistant</span>
+		<span>Colin-AI</span>
 	</div>
 
 	<div class="chat-messages" bind:this={chatContainer}>
