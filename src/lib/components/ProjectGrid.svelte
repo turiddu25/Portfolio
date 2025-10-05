@@ -1,58 +1,35 @@
 <script>
+	import { onMount } from 'svelte';
 	import ProjectModal from './ProjectModal.svelte';
+	import { getProjects, urlFor } from '$lib/sanityClient';
 
 	let selectedProject = null;
+	let projects = [];
+	let loading = true;
+	let error = null;
 
-	const projects = [
-		{
-			id: 1,
-			title: 'E-Commerce Platform',
-			description: 'Full-stack e-commerce solution with real-time inventory',
-			details: 'Built with React, Node.js, and MongoDB. Features include real-time inventory management, payment processing, and admin dashboard.',
-			tech: ['React', 'Node.js', 'MongoDB', 'Stripe'],
-			image: 'https://images.unsplash.com/photo-1557821552-17105176677c?w=800&h=600&fit=crop'
-		},
-		{
-			id: 2,
-			title: '3D Product Visualizer',
-			description: 'Interactive 3D product configurator with Three.js',
-			details: 'Advanced 3D web application allowing users to customize and visualize products in real-time with photorealistic rendering.',
-			tech: ['Three.js', 'WebGL', 'React', 'GLSL'],
-			image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=600&fit=crop'
-		},
-		{
-			id: 3,
-			title: 'AI Content Dashboard',
-			description: 'Analytics dashboard powered by machine learning',
-			details: 'Comprehensive analytics platform with AI-powered insights, data visualization, and predictive analytics.',
-			tech: ['Vue.js', 'Python', 'TensorFlow', 'D3.js'],
-			image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop'
-		},
-		{
-			id: 4,
-			title: 'Real-Time Collaboration',
-			description: 'WebSocket-based collaborative workspace',
-			details: 'Real-time collaboration tool with live cursors, presence awareness, and synchronized editing capabilities.',
-			tech: ['Socket.io', 'React', 'Redis', 'PostgreSQL'],
-			image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop'
-		},
-		{
-			id: 5,
-			title: 'AR Mobile Experience',
-			description: 'Augmented reality app for interior design',
-			details: 'Mobile AR application allowing users to visualize furniture and decor in their space before purchasing.',
-			tech: ['React Native', 'ARKit', 'ARCore', 'Three.js'],
-			image: 'https://images.unsplash.com/photo-1618761714954-0b8cd0026356?w=800&h=600&fit=crop'
-		},
-		{
-			id: 6,
-			title: 'Blockchain Marketplace',
-			description: 'NFT marketplace with smart contracts',
-			details: 'Decentralized marketplace for digital assets with smart contract integration and wallet connectivity.',
-			tech: ['Solidity', 'Ethereum', 'Next.js', 'Web3.js'],
-			image: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=600&fit=crop'
+	onMount(async () => {
+		try {
+			const data = await getProjects();
+			// Transform Sanity data to match component structure
+			projects = data.map(project => ({
+				_id: project._id,
+				title: project.title,
+				description: project.description,
+				details: project.details,
+				tech: project.technologies || [],
+				image: project.image ? urlFor(project.image).width(800).height(600).url() : '',
+				githubUrl: project.githubUrl,
+				liveUrl: project.liveUrl,
+				featured: project.featured
+			}));
+			loading = false;
+		} catch (err) {
+			console.error('Error fetching projects:', err);
+			error = 'Failed to load projects';
+			loading = false;
 		}
-	];
+	});
 
 	function openProject(project) {
 		selectedProject = project;
@@ -63,23 +40,33 @@
 	}
 </script>
 
-<div class="project-grid">
-	{#each projects as project, i}
-		<button
-			class="project-card"
-			style="animation-delay: {i * 0.1}s"
-			on:click={() => openProject(project)}
-		>
-			<div class="card-image">
-				<img src={project.image} alt={project.title} loading="lazy" />
-			</div>
-			<div class="card-overlay">
-				<h3>{project.title}</h3>
-				<p>{project.description}</p>
-			</div>
-		</button>
-	{/each}
-</div>
+{#if loading}
+	<div class="loading-state">
+		<p>Loading projects...</p>
+	</div>
+{:else if error}
+	<div class="error-state">
+		<p>{error}</p>
+	</div>
+{:else}
+	<div class="project-grid">
+		{#each projects as project, i}
+			<button
+				class="project-card"
+				style="animation-delay: {i * 0.1}s"
+				on:click={() => openProject(project)}
+			>
+				<div class="card-image">
+					<img src={project.image} alt={project.title} loading="lazy" />
+				</div>
+				<div class="card-overlay">
+					<h3>{project.title}</h3>
+					<p>{project.description}</p>
+				</div>
+			</button>
+		{/each}
+	</div>
+{/if}
 
 {#if selectedProject}
 	<ProjectModal project={selectedProject} on:close={closeModal} />
@@ -154,6 +141,19 @@
 		font-size: 0.9rem;
 		color: var(--grey-soft);
 		line-height: 1.4;
+	}
+
+	.loading-state,
+	.error-state {
+		text-align: center;
+		padding: 4rem 2rem;
+		color: var(--grey-soft);
+		font-family: var(--font-heading);
+		font-size: 1.1rem;
+	}
+
+	.error-state {
+		color: #ff6b6b;
 	}
 
 	@media (max-width: 768px) {
