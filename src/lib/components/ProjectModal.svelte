@@ -5,6 +5,7 @@
 	export let project;
 
 	const dispatch = createEventDispatcher();
+	let modalContainer;
 
 	function closeModal() {
 		dispatch('close');
@@ -18,17 +19,35 @@
 
 	// Prevent body scroll when modal is open
 	onMount(() => {
+		// Stop Lenis smooth scroll library
+		if (window.lenis) {
+			window.lenis.stop();
+		}
 		document.body.style.overflow = 'hidden';
+
+		// Portal the modal to body to escape parent transforms
+		if (modalContainer) {
+			document.body.appendChild(modalContainer);
+		}
 	});
 
 	onDestroy(() => {
+		// Re-enable Lenis smooth scrolling
+		if (window.lenis) {
+			window.lenis.start();
+		}
 		document.body.style.overflow = '';
+
+		// Clean up the portaled element
+		if (modalContainer && modalContainer.parentNode) {
+			modalContainer.parentNode.removeChild(modalContainer);
+		}
 	});
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div class="modal-backdrop" transition:fade={{ duration: 300 }} on:click={closeModal} role="dialog" aria-modal="true">
+<div class="modal-backdrop" bind:this={modalContainer} transition:fade={{ duration: 300 }} on:click={closeModal} role="dialog" aria-modal="true">
 	<div class="modal-content" on:click|stopPropagation>
 		<button class="close-button" on:click={closeModal}>
 			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -248,29 +267,31 @@
 
 	@media (max-width: 768px) {
 		.modal-backdrop {
-			padding: 0.75rem;
-			overflow-y: auto;
-			-webkit-overflow-scrolling: touch;
+			padding: 0;
+			align-items: stretch;
 		}
 
 		.modal-content {
-			max-height: 95vh;
-			border-radius: 16px;
+			max-height: 100svh;
+			height: 100svh;
+			max-width: 100%;
+			border-radius: 0;
+			margin: 0;
 		}
 
 		.close-button {
-			top: 0.75rem;
-			right: 0.75rem;
-			width: 40px;
-			height: 40px;
+			top: 1rem;
+			right: 1rem;
+			width: 44px;
+			height: 44px;
 		}
 
 		.modal-image {
-			height: 200px;
+			height: 250px;
 		}
 
 		.modal-body {
-			padding: 1.5rem;
+			padding: 1.25rem;
 		}
 
 		.modal-body h2 {
@@ -278,8 +299,13 @@
 		}
 
 		.description {
-			font-size: 1rem;
+			font-size: 0.95rem;
 			line-height: 1.6;
+		}
+
+		.tech-tag {
+			padding: 0.5rem 0.9rem;
+			font-size: 0.85rem;
 		}
 
 		.modal-actions {
@@ -292,31 +318,5 @@
 		}
 	}
 
-	@media (max-width: 480px) {
-		.modal-backdrop {
-			padding: 0.5rem;
-		}
 
-		.modal-content {
-			border-radius: 12px;
-			max-height: 98vh;
-		}
-
-		.modal-body {
-			padding: 1rem;
-		}
-
-		.modal-body h2 {
-			font-size: 1.25rem;
-		}
-
-		.description {
-			font-size: 0.9rem;
-		}
-
-		.tech-tag {
-			padding: 0.4rem 0.8rem;
-			font-size: 0.85rem;
-		}
-	}
 </style>
