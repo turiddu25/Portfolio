@@ -43,6 +43,7 @@
 		position: relative;
 		background: var(--black);
 		z-index: 10;
+		overflow-x: hidden;
 	}
 
 	.container {
@@ -71,6 +72,10 @@
 	}
 
 	@media (max-width: 1024px) {
+		.chat-projects-section {
+			padding: 3rem 1.5rem;
+		}
+
 		.container {
 			grid-template-columns: 1fr;
 			gap: 2rem;
@@ -79,6 +84,12 @@
 		.left-column {
 			position: relative;
 			top: 0;
+		}
+	}
+
+	@media (max-width: 768px) {
+		.chat-projects-section {
+			padding: 2rem 1rem;
 		}
 	}
 </style>

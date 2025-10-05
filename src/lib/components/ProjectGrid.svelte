@@ -77,6 +77,7 @@
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 		gap: 1.5rem;
+		overflow: hidden;
 	}
 
 	.project-card {
@@ -102,6 +103,22 @@
 		width: 100%;
 		height: 100%;
 		position: relative;
+	}
+
+	.card-image::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0);
+		transition: background 0.4s var(--ease);
+		pointer-events: none;
+	}
+
+	.project-card:hover .card-image::after {
+		background: rgba(0, 0, 0, 0.3);
 	}
 
 	.card-image img {

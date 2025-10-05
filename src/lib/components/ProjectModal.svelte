@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import { fade, scale } from 'svelte/transition';
 
 	export let project;
@@ -15,12 +15,21 @@
 			closeModal();
 		}
 	}
+
+	// Prevent body scroll when modal is open
+	onMount(() => {
+		document.body.style.overflow = 'hidden';
+	});
+
+	onDestroy(() => {
+		document.body.style.overflow = '';
+	});
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div class="modal-backdrop" transition:fade={{ duration: 300 }} on:click={closeModal}>
-	<div class="modal-content" transition:scale={{ duration: 300, start: 0.9 }} on:click|stopPropagation>
+<div class="modal-backdrop" transition:fade={{ duration: 300 }} on:click={closeModal} role="dialog" aria-modal="true">
+	<div class="modal-content" on:click|stopPropagation>
 		<button class="close-button" on:click={closeModal}>
 			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 				<path d="M18 6L6 18M6 6l12 12"/>
@@ -69,23 +78,20 @@
 <style>
 	.modal-backdrop {
 		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
+		inset: 0;
 		background: rgba(0, 0, 0, 0.9);
+		backdrop-filter: blur(8px);
+		z-index: 9999;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		z-index: 1000;
 		padding: 2rem;
-		backdrop-filter: blur(8px);
 	}
 
 	.modal-content {
 		position: relative;
-		max-width: 900px;
 		width: 100%;
+		max-width: 900px;
 		max-height: 90vh;
 		background: var(--black);
 		border: 2px solid var(--white);
@@ -93,6 +99,7 @@
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
+		margin: auto;
 	}
 
 	.close-button {
@@ -124,6 +131,8 @@
 		height: 300px;
 		overflow: hidden;
 		border-bottom: 1px solid var(--white);
+		position: relative;
+		flex-shrink: 0;
 	}
 
 	.modal-image img {
@@ -135,19 +144,26 @@
 	.modal-body {
 		padding: 2.5rem;
 		overflow-y: auto;
+		flex: 1;
+		min-height: 0;
 	}
 
 	.modal-body::-webkit-scrollbar {
-		width: 6px;
+		width: 8px;
 	}
 
 	.modal-body::-webkit-scrollbar-track {
-		background: transparent;
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 4px;
 	}
 
 	.modal-body::-webkit-scrollbar-thumb {
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: 3px;
+		background: rgba(255, 255, 255, 0.3);
+		border-radius: 4px;
+	}
+
+	.modal-body::-webkit-scrollbar-thumb:hover {
+		background: rgba(255, 255, 255, 0.5);
 	}
 
 	.modal-body h2 {
@@ -232,7 +248,25 @@
 
 	@media (max-width: 768px) {
 		.modal-backdrop {
-			padding: 1rem;
+			padding: 0.75rem;
+			overflow-y: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		.modal-content {
+			max-height: 95vh;
+			border-radius: 16px;
+		}
+
+		.close-button {
+			top: 0.75rem;
+			right: 0.75rem;
+			width: 40px;
+			height: 40px;
+		}
+
+		.modal-image {
+			height: 200px;
 		}
 
 		.modal-body {
@@ -243,12 +277,46 @@
 			font-size: 1.5rem;
 		}
 
+		.description {
+			font-size: 1rem;
+			line-height: 1.6;
+		}
+
 		.modal-actions {
 			flex-direction: column;
 		}
 
-		.modal-image {
-			height: 200px;
+		.action-button {
+			padding: 0.875rem 1.25rem;
+			font-size: 0.95rem;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.modal-backdrop {
+			padding: 0.5rem;
+		}
+
+		.modal-content {
+			border-radius: 12px;
+			max-height: 98vh;
+		}
+
+		.modal-body {
+			padding: 1rem;
+		}
+
+		.modal-body h2 {
+			font-size: 1.25rem;
+		}
+
+		.description {
+			font-size: 0.9rem;
+		}
+
+		.tech-tag {
+			padding: 0.4rem 0.8rem;
+			font-size: 0.85rem;
 		}
 	}
 </style>

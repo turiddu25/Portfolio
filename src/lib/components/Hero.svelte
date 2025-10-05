@@ -592,7 +592,9 @@
 			</h1>
 		</div>
 
-		<button class="cv-button"> View CV </button>
+		<a href="/cv/Colin_Salvatore_Nardo_MSci.pdf" target="_blank" rel="noopener noreferrer" class="cv-button">
+		View CV
+	</a>
 	</div>
 
 	<button class="scroll-indicator" on:click={scrollToProjects}>
@@ -718,6 +720,9 @@
 		opacity: 0;
 		position: relative;
 		overflow: hidden;
+		text-decoration: none;
+		display: inline-block;
+		transition: all 0.3s var(--ease);
 	}
 
 	.cv-button::before {
