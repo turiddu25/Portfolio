@@ -97,21 +97,23 @@
 <style>
 	.modal-backdrop {
 		position: fixed;
-		inset: 0;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
 		background: rgba(0, 0, 0, 0.9);
 		backdrop-filter: blur(8px);
-		z-index: 9999;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 2rem;
+		z-index: 1000;
 	}
 
 	.modal-content {
-		position: relative;
+		position: fixed;
+		top: 0;
+		left: 0;
 		width: 100%;
+		height: 100%;
 		max-width: 900px;
-		max-height: 95vh;
+		max-height: 100%;
 		background: var(--black);
 		border: 2px solid var(--white);
 		border-radius: 24px;
@@ -119,12 +121,13 @@
 		display: flex;
 		flex-direction: column;
 		margin: auto;
+		z-index: 1001;
 	}
 
 	.close-button {
-		position: absolute;
-		top: 1.5rem;
-		right: 1.5rem;
+		position: sticky;
+		top: 1rem;
+		right: 1rem;
 		width: 48px;
 		height: 48px;
 		background: rgba(0, 0, 0, 0.8);
@@ -136,7 +139,10 @@
 		cursor: pointer;
 		color: var(--white);
 		transition: all 0.3s var(--ease);
-		z-index: 10;
+		z-index: 1002;
+		align-self: flex-end;
+		margin-top: 1rem;
+		margin-right: 1rem;
 	}
 
 	.close-button:hover {
@@ -163,8 +169,9 @@
 	.modal-body {
 		padding: 2.5rem;
 		overflow-y: auto;
-		flex: 1;
-		min-height: 0;
+		flex-grow: 1;
+		-webkit-overflow-scrolling: touch;
+		scroll-behavior: smooth;
 	}
 
 	.modal-body::-webkit-scrollbar {
@@ -266,24 +273,12 @@
 	}
 
 	@media (max-width: 768px) {
-		.modal-backdrop {
-			padding: 0;
-			align-items: flex-start;
-			justify-content: center;
-		}
-
 		.modal-content {
-			max-height: 95vh;
-			height: auto;
-			min-height: 90vh;
 			max-width: 100%;
 			border-radius: 0;
-			margin: 2.5vh auto;
 		}
 
 		.close-button {
-			top: 1rem;
-			right: 1rem;
 			width: 44px;
 			height: 44px;
 		}
