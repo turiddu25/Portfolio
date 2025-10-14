@@ -111,7 +111,7 @@
 		position: relative;
 		width: 100%;
 		max-width: 900px;
-		max-height: 90vh;
+		max-height: 95vh;
 		background: var(--black);
 		border: 2px solid var(--white);
 		border-radius: 24px;
@@ -147,7 +147,7 @@
 
 	.modal-image {
 		width: 100%;
-		height: 300px;
+		height: 250px;
 		overflow: hidden;
 		border-bottom: 1px solid var(--white);
 		position: relative;
@@ -268,15 +268,17 @@
 	@media (max-width: 768px) {
 		.modal-backdrop {
 			padding: 0;
-			align-items: stretch;
+			align-items: flex-start;
+			justify-content: center;
 		}
 
 		.modal-content {
-			max-height: 100svh;
-			height: 100svh;
+			max-height: 95vh;
+			height: auto;
+			min-height: 90vh;
 			max-width: 100%;
 			border-radius: 0;
-			margin: 0;
+			margin: 2.5vh auto;
 		}
 
 		.close-button {
@@ -287,7 +289,7 @@
 		}
 
 		.modal-image {
-			height: 250px;
+			height: 200px;
 		}
 
 		.modal-body {
