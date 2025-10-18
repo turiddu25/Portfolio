@@ -84,10 +84,19 @@
 		// Moved this line inside onMount
 		document.body.classList.add('loading');
 
+		// Safety timeout: Always remove loading state after 10 seconds max
+		const loadingTimeout = setTimeout(() => {
+			if (document.body.classList.contains('loading')) {
+				console.warn('Asset loading timed out, forcing page reveal');
+				forceRemoveLoading();
+			}
+		}, 10000);
+
 		initScene();
 		window.addEventListener('resize', onResize);
 		window.addEventListener('scroll', handleScroll);
 		return () => {
+			clearTimeout(loadingTimeout);
 			window.removeEventListener('resize', onResize);
 			window.removeEventListener('scroll', handleScroll);
 			if (renderer) renderer.dispose();
@@ -109,6 +118,20 @@
 		}
 	}
 
+	function forceRemoveLoading() {
+		const preloader = document.querySelector('.preloader');
+		if (preloader) {
+			preloader.remove();
+		}
+		document.body.classList.remove('loading');
+		if (canvas) {
+			gsap.to(canvas, { opacity: 1, duration: 1.5, ease: 'power2.out' });
+		}
+		isSceneReady = true;
+		introAnimationComplete = true;
+		floatingStartTime = Date.now() * 0.001;
+	}
+
 	function initScene() {
 		const manager = new THREE.LoadingManager();
 		manager.onLoad = () => {
@@ -116,6 +139,16 @@
 			isSceneReady = true;
 			startHeroReveal();
 			animate();
+		};
+
+		// If any asset fails to load, still remove loading state
+		manager.onError = (url) => {
+			console.error('Error loading asset:', url);
+			// Continue anyway so page doesn't get stuck
+			if (!isSceneReady) {
+				forceRemoveLoading();
+				animate(); // Start animation even without all assets
+			}
 		};
 
 		const gltfLoader = new GLTFLoader(manager);
@@ -135,7 +168,10 @@
 				scene.environment = texture;
 			},
 			undefined,
-			(error) => console.error('Error loading HDR:', error)
+			(error) => {
+				console.error('Error loading HDR:', error);
+				// HDR is optional, continue without it
+			}
 		);
 
 		const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -178,7 +214,12 @@
 				loadLogos(gltfLoader);
 			},
 			undefined,
-			(error) => console.error('Error loading head:', error)
+			(error) => {
+				console.error('Error loading head:', error);
+				headLoaded = false;
+				// Try to load logos anyway
+				loadLogos(gltfLoader);
+			}
 		);
 
 		addBackgroundGrid();
@@ -324,7 +365,10 @@
 					scene.add(logo);
 				},
 				undefined,
-				(err) => console.error(`Error loading ${data.file}:`, err)
+				(err) => {
+					console.error(`Error loading ${data.file}:`, err);
+					// Continue loading other logos even if one fails
+				}
 			);
 		});
 	}
@@ -603,7 +647,7 @@
 			class="scroll-arrow"
 			width="24"
 			height="24"
-			viewBox="0 0 24"
+			viewBox="0 0 24 24"
 			fill="none"
 			stroke="currentColor"
 			stroke-width="2"

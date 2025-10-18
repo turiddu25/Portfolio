@@ -104,23 +104,25 @@
 		background: rgba(0, 0, 0, 0.9);
 		backdrop-filter: blur(8px);
 		z-index: 1000;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 2rem;
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
 	}
 
 	.modal-content {
-		position: fixed;
-		top: 0;
-		left: 0;
+		position: relative;
 		width: 100%;
-		height: 100%;
 		max-width: 900px;
-		max-height: 100%;
+		max-height: 90vh;
 		background: var(--black);
 		border: 2px solid var(--white);
 		border-radius: 24px;
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
-		margin: auto;
 		z-index: 1001;
 	}
 
@@ -169,8 +171,13 @@
 	.modal-body {
 		padding: 2.5rem;
 		overflow-y: auto;
+		overflow-x: hidden;
 		flex-grow: 1;
+		flex-shrink: 1;
+		min-height: 0;
 		-webkit-overflow-scrolling: touch;
+		overscroll-behavior: contain;
+		touch-action: pan-y;
 		scroll-behavior: smooth;
 	}
 
@@ -273,8 +280,14 @@
 	}
 
 	@media (max-width: 768px) {
+		.modal-backdrop {
+			padding: 0;
+			align-items: flex-start;
+		}
+
 		.modal-content {
 			max-width: 100%;
+			max-height: 100vh;
 			border-radius: 0;
 		}
 
@@ -288,7 +301,7 @@
 		}
 
 		.modal-body {
-			padding: 1.25rem;
+			padding: 1.5rem;
 		}
 
 		.modal-body h2 {
