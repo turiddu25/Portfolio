@@ -15,31 +15,26 @@
 	let introAnimationComplete = false; // Track when intro animations finish
 	let floatingStartTime = 0; // Time when floating animation starts
 
-	// NEW: stability flags
-	let revealStarted = false; // prevent double reveal
-	let webglFatal = false; // set true only if WebGL cannot init at all
-	let mountTime = 0;
-
 	const LOGO_FLOAT_AMOUNT = 0.1;
 
 	// ===== HEAD POSITIONING CONFIG =====
 	// Customize these values for desktop and mobile!
 	const HEAD_POSITIONS = {
 		desktop: { x: -1, y: 0 },
-		mobile: { x: 0, y: 0.4 } // Mobile head position
+		mobile: { x: 0, y: 0.4 }  // Mobile head position (customize this!)
 	};
 	// ===================================
 
 	// ===== HEAD & LOGO SCALE CONFIG =====
 	// Customize scale (size) for desktop and mobile!
 	const HEAD_SCALE = {
-		desktop: 3.6 * 0.7, // Desktop head size
-		mobile: 2.2 * 0.7 // Mobile head size
+		desktop: 3.6 * 0.7,  // Desktop head size
+		mobile: 2.2 * 0.7    // Mobile head size (customize this!)
 	};
 
 	const LOGO_SCALE_MULTIPLIER = {
-		desktop: 1.0, // Desktop logo size (1.0 = normal)
-		mobile: 0.7 // Mobile logo size multiplier
+		desktop: 1.0,  // Desktop logo size (1.0 = normal)
+		mobile: 0.7    // Mobile logo size multiplier (customize this!)
 	};
 	// ====================================
 
@@ -47,12 +42,12 @@
 	// Customize animation distances and timing!
 	const ANIMATION_CONFIG = {
 		head: {
-			startX: 0, // X offset from final position (0 = no offset, + = right, - = left)
-			startY: 4, // Y offset from final position (0 = no offset, + = up, - = down)
-			startZ: -4, // How far back head starts (negative = further away)
-			startScale: 0.5, // Starting scale multiplier (0.5 = half size)
-			duration: 1.8, // Animation duration in seconds
-			delay: 0.6 // Delay before animation starts
+			startX: 0,          // X offset from final position (0 = no offset, + = right, - = left)
+			startY: 4,          // Y offset from final position (0 = no offset, + = up, - = down)
+			startZ: -4,         // How far back head starts (negative = further away)
+			startScale: 0.5,    // Starting scale multiplier (0.5 = half size)
+			duration: 1.8,      // Animation duration in seconds
+			delay: 0.6          // Delay before animation starts
 		}
 	};
 
@@ -85,50 +80,14 @@
 		return HEAD_POSITIONS.desktop;
 	}
 
-	function checkWebGLSupport() {
-		try {
-			const test = document.createElement('canvas');
-			const gl = test.getContext('webgl') || test.getContext('experimental-webgl');
-			return !!gl;
-		} catch (e) {
-			return false;
-		}
-	}
-
-	// NEW: ensure reveal only runs once
-	function startRevealOnce() {
-		if (revealStarted) return;
-		revealStarted = true;
-		startHeroReveal();
-	}
-
 	onMount(() => {
+		// Moved this line inside onMount
 		document.body.classList.add('loading');
-		mountTime = performance.now();
-
-		// Check WebGL support before initializing
-		if (!checkWebGLSupport()) {
-			console.warn('WebGL is not supported on this device, showing fallback');
-			webglFatal = true;
-			forceRemoveLoading(); // Only hide canvas when truly unsupported
-			return;
-		}
-
-		// Soft fallback: Always reveal UI within 6s even if assets are slow
-		const loadingTimeout = setTimeout(() => {
-			if (!revealStarted) {
-				console.warn('Assets slow; revealing hero UI while 3D continues.');
-				startRevealOnce();
-			}
-		}, 6000);
 
 		initScene();
-
 		window.addEventListener('resize', onResize);
 		window.addEventListener('scroll', handleScroll);
-
 		return () => {
-			clearTimeout(loadingTimeout);
 			window.removeEventListener('resize', onResize);
 			window.removeEventListener('scroll', handleScroll);
 			if (renderer) renderer.dispose();
@@ -145,56 +104,9 @@
 	}
 
 	function warmUpRenderer() {
-		if (!renderer || !scene || !camera) return;
 		for (let i = 0; i < 10; i++) {
 			renderer.render(scene, camera);
 		}
-	}
-
-	function forceRemoveLoading() {
-		const preloader = document.querySelector('.preloader');
-		if (preloader) {
-			gsap.to(preloader, {
-				opacity: 0,
-				duration: 0.5,
-				ease: 'power2.inOut',
-				onComplete: () => {
-					preloader.remove();
-					document.body.classList.remove('loading');
-				}
-			});
-		} else {
-			document.body.classList.remove('loading');
-		}
-
-		// Only hide the canvas if WebGL truly failed
-		if (canvas && webglFatal) {
-			canvas.style.visibility = 'hidden';
-		}
-
-		// Reveal text content immediately with fallback styles
-		const lines = document.querySelectorAll('.name-line');
-		lines.forEach((line, i) => {
-			gsap.to(line, { opacity: 1, x: 0, duration: 1, delay: i * 0.2, ease: 'power2.out' });
-		});
-
-		const underline = document.querySelector('.underline');
-		if (underline) {
-			gsap.to(underline, { width: '100%', duration: 1, delay: 0.6, ease: 'power2.out' });
-		}
-
-		const cvButton = document.querySelector('.cv-button');
-		if (cvButton) {
-			gsap.to(cvButton, { opacity: 1, x: 0, duration: 1, delay: 0.4, ease: 'power2.out' });
-		}
-
-		const scrollIndicator = document.querySelector('.scroll-indicator');
-		if (scrollIndicator) {
-			gsap.to(scrollIndicator, { opacity: 1, duration: 1, delay: 1, ease: 'power2.out' });
-		}
-
-		introAnimationComplete = true;
-		floatingStartTime = Date.now() * 0.001;
 	}
 
 	function initScene() {
@@ -202,44 +114,19 @@
 		manager.onLoad = () => {
 			warmUpRenderer();
 			isSceneReady = true;
-			startRevealOnce();
+			startHeroReveal();
 			animate();
-		};
-
-		// Do NOT force fallback if a single asset fails (e.g., HDR)
-		manager.onError = (url) => {
-			console.warn('Non-critical asset failed to load:', url);
 		};
 
 		const gltfLoader = new GLTFLoader(manager);
 		const rgbeLoader = new RGBELoader(manager);
 
-		// Try to create WebGL context with error handling
-		try {
-			scene = new THREE.Scene();
-			camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-			camera.position.z = 5;
-			renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-			renderer.setSize(window.innerWidth, window.innerHeight);
-			const mobile = window.innerWidth < 768;
-			const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
-			renderer.setPixelRatio(dpr);
-
-			// Handle context lost/restored (common on mobile)
-			renderer.domElement.addEventListener('webglcontextlost', (e) => {
-				e.preventDefault();
-				console.warn('WebGL context lost');
-			});
-			renderer.domElement.addEventListener('webglcontextrestored', () => {
-				console.warn('WebGL context restored');
-				warmUpRenderer();
-			});
-		} catch (error) {
-			console.error('WebGL initialization failed:', error);
-			webglFatal = true;
-			forceRemoveLoading();
-			return; // Exit early - don't try to load 3D assets
-		}
+		scene = new THREE.Scene();
+		camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+		camera.position.z = 5;
+		renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 		rgbeLoader.load(
 			'/studio_small_03_1k.hdr',
@@ -248,9 +135,7 @@
 				scene.environment = texture;
 			},
 			undefined,
-			(error) => {
-				console.warn('HDR failed (optional). Continuing without environment map.', error);
-			}
+			(error) => console.error('Error loading HDR:', error)
 		);
 
 		const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -290,21 +175,10 @@
 				headGroup.add(head);
 				scene.add(headGroup);
 				headLoaded = true;
-
-				// Reveal even if logos are still loading
-				startRevealOnce();
-
 				loadLogos(gltfLoader);
 			},
 			undefined,
-			(error) => {
-				console.error('Error loading head:', error);
-				headLoaded = false;
-				// Still reveal text/UI
-				startRevealOnce();
-				// Try to load logos anyway
-				loadLogos(gltfLoader);
-			}
+			(error) => console.error('Error loading head:', error)
 		);
 
 		addBackgroundGrid();
@@ -314,20 +188,16 @@
 	function loadLogos(loader) {
 		// Desktop positions + Individual animation settings
 		const logoFiles = [
-			{
-				file: '/c.glb',
-				scale: 0.01,
-				x: 1.3,
-				y: 1.3,
-				z: 0,
+			{ 
+				file: '/c.glb', 
+				scale: 0.01, 
+				x: 1.3, y: 1.3, z: 0, 
 				rotationY: -Math.PI / 6,
 				// Mobile positions
-				mobileX: 0.5,
-				mobileY: 1.1,
-				mobileZ: 0,
+				mobileX: 0.5, mobileY: 1.1, mobileZ: 0,
 				// Animation settings (optional - uses defaults if not specified)
 				animation: {
-					startX: 3, // Come from right
+					startX: 3,      // Come from right
 					startY: 10,
 					startZ: -15,
 					startScale: 0.3,
@@ -335,64 +205,48 @@
 					delay: 0.8
 				}
 			},
-			{
-				file: '/css_logo_3d_model.glb',
-				scale: 1,
-				x: 1.6,
-				y: 1.3,
-				z: 0.8,
-				mobileX: 1.2,
-				mobileY: 1.5,
-				mobileZ: 0.5,
+			{ 
+				file: '/css_logo_3d_model.glb', 
+				scale: 1, 
+				x: 1.6, y: 1.3, z: 0.8,
+				mobileX: 1.2, mobileY: 1.5, mobileZ: 0.5,
 				animation: {
 					startX: 2,
-					startY: 2, // Come from top-right
+					startY: 2,      // Come from top-right
 					startZ: -12,
 					startScale: 0.2,
 					duration: 1.8,
 					delay: 0.9
 				}
 			},
-			{
-				file: '/html_logo_3d_model.glb',
-				scale: 0.3,
-				x: 0,
-				y: 1.5,
-				z: 1,
-				mobileX: 0,
-				mobileY: 1.5,
-				mobileZ: 0.8,
+			{ 
+				file: '/html_logo_3d_model.glb', 
+				scale: 0.3, 
+				x: 0, y: 1.5, z: 1,
+				mobileX: 0, mobileY: 1.5, mobileZ: 0.8,
 				animation: {
-					startY: 5, // Come from top
+					startY: 5,      // Come from top
 					startZ: -10,
 					delay: 1.0
 				}
 			},
-			{
-				file: '/java.glb',
-				scale: 0.2,
-				x: -1.1,
-				y: 1.1,
-				z: 0.8,
-				mobileX: -0.6,
-				mobileY: 0.9,
-				mobileZ: 0.5,
+			{ 
+				file: '/java.glb', 
+				scale: 0.2, 
+				x: -1.1, y: 1.1, z: 0.8,
+				mobileX: -0.6, mobileY: 0.9, mobileZ: 0.5,
 				animation: {
-					startX: -10, // Come from left
+					startX: -10,     // Come from left
 					startY: 10,
 					startZ: -18,
 					delay: 1.1
 				}
 			},
-			{
-				file: '/python.glb',
-				scale: 0.01,
-				x: -1.4,
-				y: 0,
-				z: 0,
-				mobileX: -0.8,
-				mobileY: 0,
-				mobileZ: 0,
+			{ 
+				file: '/python.glb', 
+				scale: 0.01, 
+				x: -1.4, y: 0, z: 0,
+				mobileX: -0.8, mobileY: 0, mobileZ: 0,
 				animation: {
 					startX: -10,
 					startY: -10,
@@ -400,18 +254,14 @@
 					delay: 1.2
 				}
 			},
-			{
-				file: '/react_logo.glb',
-				scale: 0.15,
-				x: 1.1,
-				y: -1.0,
-				z: 0.8,
-				mobileX: 0.7,
-				mobileY: -0.3,
-				mobileZ: 0.5,
+			{ 
+				file: '/react_logo.glb', 
+				scale: 0.15, 
+				x: 1.1, y: -1.0, z: 0.8,
+				mobileX: 0.7, mobileY: -0.3, mobileZ: 0.5,
 				animation: {
 					startX: 3,
-					startY: -10, // Come from bottom
+					startY: -10,     // Come from bottom
 					startZ: -14,
 					delay: 1.3
 				}
@@ -436,13 +286,13 @@
 					const scaleMultiplier = getLogoScaleMultiplier();
 					const finalScale = data.scale * scaleMultiplier;
 					logo.scale.set(finalScale, finalScale, finalScale);
-
+					
 					// Use mobile or desktop positions based on screen size
 					const isMobile = window.innerWidth < 768;
 					const posX = isMobile ? data.mobileX : data.x;
 					const posY = isMobile ? data.mobileY : data.y;
 					const posZ = isMobile ? data.mobileZ : data.z;
-
+					
 					logo.position.set(posX, posY, posZ);
 					if (data.rotationY !== undefined) logo.rotation.y = data.rotationY;
 
@@ -451,12 +301,12 @@
 					const headPos = getResponsivePosition();
 					const worldPosX = posX + headPos.x;
 					const worldPosY = posY + headPos.y;
-
+					
 					logo.position.set(worldPosX, worldPosY, posZ);
-
+					
 					// Merge logo animation settings with defaults
 					const animConfig = { ...DEFAULT_LOGO_ANIMATION, ...(data.animation || {}) };
-
+					
 					logos.push({
 						mesh: logo,
 						data: data, // Store original data for resize
@@ -474,25 +324,17 @@
 					scene.add(logo);
 				},
 				undefined,
-				(err) => {
-					console.error(`Error loading ${data.file}:`, err);
-					// Continue loading other logos even if one fails
-				}
+				(err) => console.error(`Error loading ${data.file}:`, err)
 			);
 		});
 	}
 
 	function handleSceneReady() {
 		isSceneReady = true;
-		startRevealOnce();
+		startHeroReveal();
 	}
 
 	function startHeroReveal() {
-		// guard against multiple calls
-		if (revealStarted !== true) {
-			// no-op, startRevealOnce always calls us with revealStarted already set
-		}
-
 		// Smoothly fade out preloader first
 		const preloader = document.querySelector('.preloader');
 		if (preloader) {
@@ -508,9 +350,7 @@
 		}
 
 		// After preloader starts fading, reveal content
-		if (!webglFatal) {
-			gsap.to(canvas, { opacity: 1, duration: 1.5, delay: 0.5, ease: 'power2.out' });
-		}
+		gsap.to(canvas, { opacity: 1, duration: 1.5, delay: 0.5, ease: 'power2.out' });
 
 		// Animate text lines with proper delays
 		const lines = document.querySelectorAll('.name-line');
@@ -556,40 +396,38 @@
 		if (head && headGroup) {
 			const finalPos = getResponsivePosition();
 			const finalScale = getResponsiveScale();
-
+			
 			// Animate head position from offset start position
-			gsap.fromTo(
-				headGroup.position,
-				{
-					x: finalPos.x + ANIMATION_CONFIG.head.startX,
-					y: finalPos.y + ANIMATION_CONFIG.head.startY,
-					z: ANIMATION_CONFIG.head.startZ
+			gsap.fromTo(headGroup.position, 
+				{ 
+					x: finalPos.x + ANIMATION_CONFIG.head.startX, 
+					y: finalPos.y + ANIMATION_CONFIG.head.startY, 
+					z: ANIMATION_CONFIG.head.startZ 
 				},
-				{
-					x: finalPos.x,
-					y: finalPos.y,
-					z: 0,
-					duration: ANIMATION_CONFIG.head.duration,
-					delay: ANIMATION_CONFIG.head.delay,
-					ease: 'power2.out'
+				{ 
+					x: finalPos.x, 
+					y: finalPos.y, 
+					z: 0, 
+					duration: ANIMATION_CONFIG.head.duration, 
+					delay: ANIMATION_CONFIG.head.delay, 
+					ease: 'power2.out' 
 				}
 			);
-
+			
 			// Animate head scale from small to final size
-			gsap.fromTo(
-				head.scale,
-				{
-					x: finalScale * ANIMATION_CONFIG.head.startScale,
-					y: finalScale * ANIMATION_CONFIG.head.startScale,
-					z: finalScale * ANIMATION_CONFIG.head.startScale
+			gsap.fromTo(head.scale, 
+				{ 
+					x: finalScale * ANIMATION_CONFIG.head.startScale, 
+					y: finalScale * ANIMATION_CONFIG.head.startScale, 
+					z: finalScale * ANIMATION_CONFIG.head.startScale 
 				},
-				{
-					x: finalScale,
-					y: finalScale,
-					z: finalScale,
-					duration: ANIMATION_CONFIG.head.duration,
-					delay: ANIMATION_CONFIG.head.delay,
-					ease: 'power2.out'
+				{ 
+					x: finalScale, 
+					y: finalScale, 
+					z: finalScale, 
+					duration: ANIMATION_CONFIG.head.duration, 
+					delay: ANIMATION_CONFIG.head.delay, 
+					ease: 'power2.out' 
 				}
 			);
 		}
@@ -599,59 +437,49 @@
 		logos.forEach((logoObj) => {
 			const finalScale = logoObj.baseScale * getLogoScaleMultiplier();
 			const anim = logoObj.animConfig; // Use per-logo animation config
-
+			
 			// Calculate start positions with offsets
 			const startX = logoObj.originalPos.x + anim.startX;
 			const startY = logoObj.originalPos.y + anim.startY;
 			const startZ = logoObj.originalPos.z + anim.startZ;
-
+			
 			// Set initial position (before animation starts)
 			logoObj.mesh.position.set(startX, startY, startZ);
-
+			
 			// Animate logo position from offset start position
-			gsap.to(logoObj.mesh.position, {
-				x: logoObj.originalPos.x,
-				y: logoObj.originalPos.y,
-				z: logoObj.originalPos.z,
-				duration: anim.duration,
-				delay: anim.delay,
-				ease: 'power2.out'
-			});
-
-			// Animate logo scale from small to final size
-			gsap.fromTo(
-				{
-					x: finalScale * anim.startScale,
-					y: finalScale * anim.startScale,
-					z: finalScale * anim.startScale
-				},
-				{},
-				{
-					duration: 0 // noop; we must animate the actual object scale below
+			gsap.to(logoObj.mesh.position,
+				{ 
+					x: logoObj.originalPos.x, 
+					y: logoObj.originalPos.y, 
+					z: logoObj.originalPos.z,
+					duration: anim.duration,
+					delay: anim.delay,
+					ease: 'power2.out'
 				}
 			);
-			gsap.fromTo(
-				logoObj.mesh.scale,
-				{
+			
+			// Animate logo scale from small to final size
+			gsap.fromTo(logoObj.mesh.scale,
+				{ 
 					x: finalScale * anim.startScale,
 					y: finalScale * anim.startScale,
 					z: finalScale * anim.startScale
 				},
-				{
-					x: finalScale,
-					y: finalScale,
+				{ 
+					x: finalScale, 
+					y: finalScale, 
 					z: finalScale,
 					duration: anim.duration,
 					delay: anim.delay,
 					ease: 'power2.out'
 				}
 			);
-
+			
 			// Track the longest animation time
 			const totalTime = anim.delay + anim.duration;
 			if (totalTime > maxDelay) maxDelay = totalTime;
 		});
-
+		
 		// Enable floating animation after all intro animations complete
 		setTimeout(() => {
 			introAnimationComplete = true;
@@ -666,27 +494,15 @@
 			vertices.push(Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 2 - 5);
 		}
 		geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-		const material = new THREE.PointsMaterial({
-			color: 0xffffff,
-			size: 0.05,
-			transparent: true,
-			opacity: 0.05
-		});
+		const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, transparent: true, opacity: 0.05 });
 		const points = new THREE.Points(geometry, material);
 		scene.add(points);
 	}
 
 	function onResize() {
-		if (!camera || !renderer) return; // Exit if WebGL not initialized
-
 		camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
-
 		renderer.setSize(window.innerWidth, window.innerHeight);
-		const mobile = window.innerWidth < 768;
-		const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
-		renderer.setPixelRatio(dpr);
-
 		if (head && headLoaded && headGroup) {
 			const newScale = getResponsiveScale();
 			const pos = getResponsivePosition();
@@ -694,24 +510,24 @@
 			headGroup.position.x = pos.x;
 			headGroup.position.y = pos.y;
 		}
-
+		
 		// Update logo positions and scales for responsive layout
 		const isMobile = window.innerWidth < 768;
 		const headPos = getResponsivePosition();
-
+		
 		logos.forEach((logoObj) => {
 			if (logoObj.data) {
 				// Update position (convert relative to world position)
 				const relPosX = isMobile ? logoObj.data.mobileX : logoObj.data.x;
 				const relPosY = isMobile ? logoObj.data.mobileY : logoObj.data.y;
 				const posZ = isMobile ? logoObj.data.mobileZ : logoObj.data.z;
-
+				
 				// Convert to world position by adding head offset
 				const worldPosX = relPosX + headPos.x;
 				const worldPosY = relPosY + headPos.y;
-
+				
 				logoObj.originalPos = { x: worldPosX, y: worldPosY, z: posZ };
-
+				
 				// Update scale
 				const scaleMultiplier = getLogoScaleMultiplier();
 				const finalScale = logoObj.baseScale * scaleMultiplier;
@@ -724,9 +540,7 @@
 
 	function animate() {
 		requestAnimationFrame(animate);
-		if (!renderer || !scene || !camera) return;
-		if (!isSceneReady) return; // prevent early renders and WebGL failures
-
+		if (!isSceneReady) return; // <— prevents early renders
 		const time = Date.now() * 0.001;
 
 		if (head && headLoaded) {
@@ -741,23 +555,18 @@
 		if (introAnimationComplete) {
 			// Use relative time from when floating started to avoid jolts
 			const floatTime = time - floatingStartTime;
-
+			
 			// Smooth blend-in: amplitude goes from 0 to 1 over 1 second
 			const blendDuration = 1.0; // seconds
 			const blendFactor = Math.min(floatTime / blendDuration, 1.0);
-
+			
 			logos.forEach((obj) => {
 				const { mesh, originalPos, floatSpeed, floatOffset, floatAmount, rotationSpeed, originalRotation } = obj;
-
+				
 				// Apply floating with smooth blend-in
-				mesh.position.y =
-					originalPos.y + Math.sin(floatTime * floatSpeed + floatOffset) * floatAmount * blendFactor;
-				mesh.position.x =
-					originalPos.x +
-					Math.cos(floatTime * floatSpeed * 0.7 + floatOffset) * floatAmount * 0.5 * blendFactor;
-				mesh.position.z =
-					originalPos.z +
-					Math.sin(floatTime * floatSpeed * 0.5 + floatOffset) * floatAmount * 0.3 * blendFactor;
+				mesh.position.y = originalPos.y + Math.sin(floatTime * floatSpeed + floatOffset) * floatAmount * blendFactor;
+				mesh.position.x = originalPos.x + Math.cos(floatTime * floatSpeed * 0.7 + floatOffset) * floatAmount * 0.5 * blendFactor;
+				mesh.position.z = originalPos.z + Math.sin(floatTime * floatSpeed * 0.5 + floatOffset) * floatAmount * 0.3 * blendFactor;
 				mesh.rotation.y = originalRotation.y + Math.sin(floatTime * rotationSpeed + floatOffset) * 0.1 * blendFactor;
 			});
 		}
@@ -784,8 +593,8 @@
 		</div>
 
 		<a href="/cv/Colin_Salvatore_Nardo_MSci.pdf" target="_blank" rel="noopener noreferrer" class="cv-button">
-			View CV
-		</a>
+		View CV
+	</a>
 	</div>
 
 	<button class="scroll-indicator" on:click={scrollToProjects}>
@@ -845,7 +654,7 @@
 		height: 100%;
 		z-index: 1;
 		pointer-events: none;
-		opacity: 0; /* will be animated to 1 on reveal (unless webglFatal) */
+		opacity: 0;
 	}
 
 	.hero-content {
