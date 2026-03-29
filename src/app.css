@@ -8,6 +8,7 @@
   src: url('$lib/assets/fonts/technor/Technor-Light.otf') format('opentype');
   font-weight: 300;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -15,6 +16,7 @@
   src: url('$lib/assets/fonts/technor/Technor-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -22,6 +24,7 @@
   src: url('$lib/assets/fonts/technor/Technor-Medium.otf') format('opentype');
   font-weight: 500;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -29,6 +32,7 @@
   src: url('$lib/assets/fonts/technor/Technor-Semibold.otf') format('opentype');
   font-weight: 600;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -36,6 +40,7 @@
   src: url('$lib/assets/fonts/technor/Technor-Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
 }
 
 /* Import Local Fonts - Supreme */
@@ -44,6 +49,7 @@
   src: url('$lib/assets/fonts/supreme/Supreme-Light.otf') format('opentype');
   font-weight: 300;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -51,6 +57,7 @@
   src: url('$lib/assets/fonts/supreme/Supreme-LightItalic.otf') format('opentype');
   font-weight: 300;
   font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
@@ -58,6 +65,7 @@
   src: url('$lib/assets/fonts/supreme/Supreme-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -65,6 +73,7 @@
   src: url('$lib/assets/fonts/supreme/Supreme-Italic.otf') format('opentype');
   font-weight: 400;
   font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
@@ -72,6 +81,7 @@
   src: url('$lib/assets/fonts/supreme/Supreme-Medium.otf') format('opentype');
   font-weight: 500;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -79,6 +89,7 @@
   src: url('$lib/assets/fonts/supreme/Supreme-Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
 }
 
 /* Monochrome Design System */

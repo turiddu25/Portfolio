@@ -1,35 +1,9 @@
 <script>
-	import { onMount } from 'svelte';
 	import ProjectModal from './ProjectModal.svelte';
-	import { getProjects, urlFor } from '$lib/sanityClient';
+
+	export let projects = [];
 
 	let selectedProject = null;
-	let projects = [];
-	let loading = true;
-	let error = null;
-
-	onMount(async () => {
-		try {
-			const data = await getProjects();
-			// Transform Sanity data to match component structure
-			projects = data.map(project => ({
-				_id: project._id,
-				title: project.title,
-				description: project.description,
-				details: project.details,
-				tech: project.technologies || [],
-				image: project.image ? urlFor(project.image).width(800).height(600).url() : '',
-				githubUrl: project.githubUrl,
-				liveUrl: project.liveUrl,
-				featured: project.featured
-			}));
-			loading = false;
-		} catch (err) {
-			console.error('Error fetching projects:', err);
-			error = 'Failed to load projects';
-			loading = false;
-		}
-	});
 
 	function openProject(project) {
 		selectedProject = project;
@@ -40,13 +14,9 @@
 	}
 </script>
 
-{#if loading}
+{#if projects.length === 0}
 	<div class="loading-state">
-		<p>Loading projects...</p>
-	</div>
-{:else if error}
-	<div class="error-state">
-		<p>{error}</p>
+		<p>No projects found.</p>
 	</div>
 {:else}
 	<div class="project-grid">
@@ -57,7 +27,13 @@
 				on:click={() => openProject(project)}
 			>
 				<div class="card-image">
-					<img src={project.image} alt={project.title} loading="lazy" />
+					<img
+						src={project.image}
+						srcset={project.imageSrcset || ''}
+						sizes="(max-width: 768px) 100vw, 50vw"
+						alt={project.title}
+						loading="lazy"
+					/>
 				</div>
 				<div class="card-overlay">
 					<h3>{project.title}</h3>
@@ -160,17 +136,12 @@
 		line-height: 1.4;
 	}
 
-	.loading-state,
-	.error-state {
+	.loading-state {
 		text-align: center;
 		padding: 4rem 2rem;
 		color: var(--grey-soft);
 		font-family: var(--font-heading);
 		font-size: 1.1rem;
-	}
-
-	.error-state {
-		color: #ff6b6b;
 	}
 
 	@media (max-width: 768px) {

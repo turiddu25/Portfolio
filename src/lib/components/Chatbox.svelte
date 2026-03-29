@@ -1,5 +1,5 @@
 <script>
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -11,6 +11,7 @@
     let isPlayingAudio = false; // New state to track audio playback
     let chatContainer;
     let sessionId = null;
+    let currentAudio = null; // Track active audio for cleanup
 
     function scrollToBottom() {
         setTimeout(() => {
@@ -25,7 +26,8 @@
         try {
             isPlayingAudio = true;
             const audio = new Audio(`data:audio/wav;base64,${base64String}`);
-            
+            currentAudio = audio;
+
             // This promise resolves when the audio finishes playing
             await new Promise((resolve, reject) => {
                 audio.onended = resolve;
@@ -36,9 +38,17 @@
         } catch (error) {
             console.error("Error playing audio:", error);
         } finally {
+            currentAudio = null;
             isPlayingAudio = false;
         }
     }
+
+    onDestroy(() => {
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+        }
+    });
 
     async function sendMessage() {
         if (!inputValue.trim() || isTyping || isPlayingAudio) return;
@@ -102,7 +112,7 @@
         }
     }
 
-    function handleKeypress(e) {
+    function handleKeydown(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
@@ -140,7 +150,7 @@
         <input
             type="text"
             bind:value={inputValue}
-            on:keypress={handleKeypress}
+            on:keydown={handleKeydown}
             placeholder="Ask me anything..."
             disabled={isTyping || isPlayingAudio}
         />

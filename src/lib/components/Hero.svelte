@@ -80,6 +80,13 @@
 		return HEAD_POSITIONS.desktop;
 	}
 
+	let paused = false;
+
+	function handleVisibilityChange() {
+		paused = document.hidden;
+		if (!paused && isSceneReady) animate(); // resume RAF loop
+	}
+
 	onMount(() => {
 		// Moved this line inside onMount
 		document.body.classList.add('loading');
@@ -87,9 +94,12 @@
 		initScene();
 		window.addEventListener('resize', onResize);
 		window.addEventListener('scroll', handleScroll);
+		document.addEventListener('visibilitychange', handleVisibilityChange);
 		return () => {
 			window.removeEventListener('resize', onResize);
 			window.removeEventListener('scroll', handleScroll);
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			clearTimeout(loadingTimeout);
 			if (renderer) renderer.dispose();
 		};
 	});
@@ -109,13 +119,23 @@
 		}
 	}
 
+	let loadingTimeout;
+
+	function sceneReady() {
+		if (isSceneReady) return; // prevent double-fire from timeout + onLoad race
+		clearTimeout(loadingTimeout);
+		warmUpRenderer();
+		isSceneReady = true;
+		startHeroReveal();
+		animate();
+	}
+
 	function initScene() {
 		const manager = new THREE.LoadingManager();
-		manager.onLoad = () => {
-			warmUpRenderer();
-			isSceneReady = true;
-			startHeroReveal();
-			animate();
+		manager.onLoad = sceneReady;
+		manager.onError = (url) => {
+			console.error('Failed to load:', url);
+			sceneReady(); // show page anyway on asset failure
 		};
 
 		const gltfLoader = new GLTFLoader(manager);
@@ -182,7 +202,14 @@
 		);
 
 		addBackgroundGrid();
-		animate();
+
+		// Fallback: show page after 10s even if assets haven't finished
+		loadingTimeout = setTimeout(() => {
+			if (!isSceneReady) {
+				console.warn('Scene loading timed out after 10 seconds');
+				sceneReady();
+			}
+		}, 10000);
 	}
 
 	function loadLogos(loader) {
@@ -539,6 +566,7 @@
 	function handleScroll() {}
 
 	function animate() {
+		if (paused) return; // stop RAF loop when tab is hidden
 		requestAnimationFrame(animate);
 		if (!isSceneReady) return; // <— prevents early renders
 		const time = Date.now() * 0.001;

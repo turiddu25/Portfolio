@@ -3,6 +3,7 @@
 	import Chatbox from './Chatbox.svelte';
 	import ProjectGrid from './ProjectGrid.svelte';
 
+	export let projects = [];
 	let sectionVisible = false;
 
 	onMount(() => {
@@ -31,7 +32,7 @@
 		</div>
 
 		<div class="right-column">
-			<ProjectGrid />
+			<ProjectGrid projects={projects} />
 		</div>
 	</div>
 </section>

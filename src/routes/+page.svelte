@@ -1,9 +1,11 @@
 <script>
-	import { onMount, setContext } from 'svelte';
+	import { onMount } from 'svelte';
 	import Hero from '$lib/components/Hero.svelte';
 	import ChatProjects from '$lib/components/ChatProjects.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import Lenis from 'lenis';
+
+	export let data;
 
 	let lenis;
 
@@ -18,26 +20,47 @@
 			touchMultiplier: 2
 		});
 
+		let lenisRafId;
+		let lenisPaused = false;
+
 		function raf(time) {
+			if (lenisPaused) return;
 			lenis.raf(time);
-			requestAnimationFrame(raf);
+			lenisRafId = requestAnimationFrame(raf);
 		}
 
-		requestAnimationFrame(raf);
+		lenisRafId = requestAnimationFrame(raf);
+
+		function handleVisibilityChange() {
+			lenisPaused = document.hidden;
+			if (!lenisPaused) lenisRafId = requestAnimationFrame(raf);
+		}
+
+		document.addEventListener('visibilitychange', handleVisibilityChange);
 
 		// Make lenis available to child components
 		window.lenis = lenis;
 
 		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			cancelAnimationFrame(lenisRafId);
 			lenis.destroy();
 			delete window.lenis;
 		};
 	});
 </script>
 
+<svelte:head>
+	<title>Colin Salvatore Nardo — Portfolio</title>
+	<meta name="description" content="Portfolio of Colin Salvatore Nardo — software engineer. Explore projects, chat with an AI clone, and view my CV." />
+	<meta property="og:title" content="Colin Salvatore Nardo — Portfolio" />
+	<meta property="og:description" content="Software engineer portfolio featuring interactive 3D visuals, projects, and an AI chatbot." />
+	<meta property="og:type" content="website" />
+</svelte:head>
+
 <main>
 	<Hero />
-	<ChatProjects />
+	<ChatProjects projects={data.projects} />
 	<Footer />
 </main>
 
