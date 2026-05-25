@@ -253,31 +253,6 @@
 				}
 			},
 			{ 
-				file: '/css_logo_3d_model.glb', 
-				scale: 1, 
-				x: 1.6, y: 1.3, z: 0.8,
-				mobileX: 1.2, mobileY: 1.5, mobileZ: 0.5,
-				animation: {
-					startX: 2,
-					startY: 2,      // Come from top-right
-					startZ: -12,
-					startScale: 0.2,
-					duration: 1.8,
-					delay: 0.9
-				}
-			},
-			{ 
-				file: '/html_logo_3d_model.glb', 
-				scale: 0.3, 
-				x: 0, y: 1.5, z: 1,
-				mobileX: 0, mobileY: 1.5, mobileZ: 0.8,
-				animation: {
-					startY: 5,      // Come from top
-					startZ: -10,
-					delay: 1.0
-				}
-			},
-			{ 
 				file: '/java.glb', 
 				scale: 0.2, 
 				x: -1.1, y: 1.1, z: 0.8,
