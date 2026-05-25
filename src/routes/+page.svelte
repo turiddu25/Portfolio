@@ -1,7 +1,9 @@
 <script>
+	// @ts-nocheck
 	import { onMount } from 'svelte';
 	import Hero from '$lib/components/Hero.svelte';
-	import ChatProjects from '$lib/components/ChatProjects.svelte';
+	import ProjectsSection from '$lib/components/projects/ProjectsSection.svelte';
+	import About from '$lib/components/About.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import Lenis from 'lenis';
 
@@ -60,7 +62,8 @@
 
 <main>
 	<Hero />
-	<ChatProjects projects={data.projects} />
+	<ProjectsSection projects={data.projects} />
+	<About />
 	<Footer />
 </main>
 

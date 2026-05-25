@@ -3,7 +3,15 @@
 
 	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-	let conversations = [];
+	type Conversation = {
+		id: string | number;
+		user_message: string;
+		ai_response: string;
+		timestamp: string;
+		formattedTimestamp?: string;
+	};
+
+	let conversations: Conversation[] = [];
 	let isAuthenticated = false;
 	let isLoading = false;
 	let error = '';
@@ -37,9 +45,9 @@
 				throw new Error('Failed to fetch conversations from the server.');
 			}
 
-			const data = await response.json();
+			const data: Conversation[] = await response.json();
 			// Format the timestamp to be more readable
-			conversations = data.map((convo) => ({
+			conversations = data.map((convo: Conversation) => ({
 				...convo,
 				timestamp: new Date(convo.timestamp).toLocaleString()
 			}));

@@ -22,17 +22,7 @@
 
 <footer>
 	<div class="footer-content">
-		<!-- Abstract line art background -->
-		<svg class="footer-bg" viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg">
-			<path d="M0,100 Q250,50 500,100 T1000,100" stroke="white" stroke-width="1" fill="none" opacity="0.05"/>
-			<path d="M0,200 Q250,150 500,200 T1000,200" stroke="white" stroke-width="1" fill="none" opacity="0.05"/>
-			<path d="M0,300 Q250,250 500,300 T1000,300" stroke="white" stroke-width="1" fill="none" opacity="0.05"/>
-			<circle cx="100" cy="100" r="3" fill="white" opacity="0.05"/>
-			<circle cx="300" cy="200" r="3" fill="white" opacity="0.05"/>
-			<circle cx="500" cy="150" r="3" fill="white" opacity="0.05"/>
-			<circle cx="700" cy="250" r="3" fill="white" opacity="0.05"/>
-			<circle cx="900" cy="180" r="3" fill="white" opacity="0.05"/>
-		</svg>
+		<p class="footer-name">COLIN SALVATORE NARDO</p>
 
 		<div class="footer-inner">
 			<div class="social-links">
@@ -61,7 +51,7 @@
 <style>
 	footer {
 		position: relative;
-		padding: 4rem 2rem 2rem;
+		padding: 6rem 2rem 2rem;
 		background: var(--black);
 		overflow: hidden;
 	}
@@ -72,15 +62,16 @@
 		margin: 0 auto;
 	}
 
-	.footer-bg {
-		position: absolute;
-		top: 0;
-		left: 50%;
-		transform: translateX(-50%);
-		width: 100%;
-		height: 100%;
-		pointer-events: none;
-		z-index: 0;
+	.footer-name {
+		margin: 0 0 -2.5vw;
+		font-family: var(--font-heading);
+		font-size: clamp(4rem, 12vw, 13rem);
+		font-weight: 700;
+		line-height: 0.78;
+		text-align: center;
+		color: transparent;
+		-webkit-text-stroke: 1px rgba(255, 255, 255, 0.2);
+		opacity: 0.9;
 	}
 
 	.footer-inner {
@@ -142,6 +133,10 @@
 	@media (max-width: 768px) {
 		footer {
 			padding: 3rem 1rem 1.5rem;
+		}
+
+		.footer-name {
+			margin-bottom: -1rem;
 		}
 
 		.social-links {

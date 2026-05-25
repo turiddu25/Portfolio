@@ -33,9 +33,21 @@ export const project = defineType({
       name: 'details',
       title: 'Detailed Description',
       type: 'text',
-      description: 'Full description shown in the modal',
+      description: 'Full description shown on the project detail page',
       rows: 5,
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'year',
+      title: 'Year',
+      type: 'string',
+      description: 'Year shown in project lists and metadata',
+    }),
+    defineField({
+      name: 'role',
+      title: 'Role',
+      type: 'string',
+      description: 'Your role on the project',
     }),
     defineField({
       name: 'image',
@@ -53,6 +65,13 @@ export const project = defineType({
       of: [{type: 'string'}],
       description: 'List of technologies used in this project',
       validation: (Rule) => Rule.required().min(1),
+    }),
+    defineField({
+      name: 'gallery',
+      title: 'Gallery Images',
+      type: 'array',
+      of: [{type: 'image', options: {hotspot: true}}],
+      description: 'Optional screenshots for the project detail page',
     }),
     defineField({
       name: 'githubUrl',

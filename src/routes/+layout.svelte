@@ -2,14 +2,29 @@
 	import '../app.css';
 	import favicon from '$lib/assets/icon.png';
 	import { onMount } from 'svelte';
+	import { onNavigate } from '$app/navigation';
+	import ChatPanel from '$lib/components/chat/ChatPanel.svelte';
+	import ChatFAB from '$lib/components/chat/ChatFAB.svelte';
+	import { sceneReady } from '$lib/stores/sceneStore';
 
 	let { children } = $props();
+
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 
 	// Prevent browser UI from hiding/showing on mobile for static experience
 	onMount(() => {
 		// This approach prevents the browser UI from hiding by keeping the page from
 		// scrolling too fast and triggering the UI hide/show behavior
-		let isScrollTimeout;
+		let isScrollTimeout: ReturnType<typeof setTimeout> | undefined;
 		
 		const handleScroll = () => {
 			// Clear any existing timeout
@@ -43,4 +58,25 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
+{#if !$sceneReady}
+	<div class="global-preloader">
+		<span>Loading...</span>
+	</div>
+{/if}
+
 {@render children?.()}
+<ChatPanel />
+<ChatFAB />
+
+<style>
+	.global-preloader {
+		position: fixed;
+		inset: 0;
+		z-index: 9999;
+		display: grid;
+		place-items: center;
+		background: var(--black);
+		color: var(--white);
+		font-family: var(--font-heading);
+	}
+</style>

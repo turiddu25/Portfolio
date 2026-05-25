@@ -1,19 +1,22 @@
+<!-- @ts-nocheck -->
+
 <script>
+	// @ts-nocheck
 	import { onMount } from 'svelte';
-	import * as THREE from 'three';
-	import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-	import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 	import { gsap } from 'gsap';
+	import { openChat } from '$lib/stores/chatStore';
+	import { sceneReady as sceneReadyStore } from '$lib/stores/sceneStore';
 
 	let canvas;
+	let THREE;
 	let scene, camera, renderer, head;
+	let raycaster, pointer;
 	let headLoaded = false;
+	let headHovered = false;
 	let logos = [];
 	let headGroup;
-	let headFloatOffset = Math.random() * Math.PI * 2;
+	let headFloatOffset = 0;
 	let isSceneReady = false;
-	let introAnimationComplete = false; // Track when intro animations finish
-	let floatingStartTime = 0; // Time when floating animation starts
 
 	const LOGO_FLOAT_AMOUNT = 0.1;
 
@@ -87,17 +90,27 @@
 		if (!paused && isSceneReady) animate(); // resume RAF loop
 	}
 
-	onMount(() => {
-		// Moved this line inside onMount
-		document.body.classList.add('loading');
+	onMount(async () => {
+		sceneReadyStore.set(false);
+		const threeModule = await import('three');
+		const [{ GLTFLoader }, { RGBELoader }, { DRACOLoader }] = await Promise.all([
+			import('three/addons/loaders/GLTFLoader.js'),
+			import('three/addons/loaders/RGBELoader.js'),
+			import('three/addons/loaders/DRACOLoader.js')
+		]);
 
-		initScene();
+		THREE = threeModule;
+		initScene(GLTFLoader, RGBELoader, DRACOLoader);
 		window.addEventListener('resize', onResize);
 		window.addEventListener('scroll', handleScroll);
+		window.addEventListener('pointermove', handlePointerMove);
+		window.addEventListener('click', handleClick);
 		document.addEventListener('visibilitychange', handleVisibilityChange);
 		return () => {
 			window.removeEventListener('resize', onResize);
 			window.removeEventListener('scroll', handleScroll);
+			window.removeEventListener('pointermove', handlePointerMove);
+			window.removeEventListener('click', handleClick);
 			document.removeEventListener('visibilitychange', handleVisibilityChange);
 			clearTimeout(loadingTimeout);
 			if (renderer) renderer.dispose();
@@ -105,7 +118,7 @@
 	});
 
 	function scrollToProjects() {
-		const projectsSection = document.querySelector('.chat-projects-section');
+		const projectsSection = document.querySelector('#projects');
 		if (projectsSection && window.lenis) {
 			window.lenis.scrollTo(projectsSection, { duration: 2 });
 		} else if (projectsSection) {
@@ -121,32 +134,38 @@
 
 	let loadingTimeout;
 
-	function sceneReady() {
+	function markSceneReady() {
 		if (isSceneReady) return; // prevent double-fire from timeout + onLoad race
 		clearTimeout(loadingTimeout);
 		warmUpRenderer();
 		isSceneReady = true;
+		sceneReadyStore.set(true);
 		startHeroReveal();
 		animate();
 	}
 
-	function initScene() {
+	function initScene(GLTFLoader, RGBELoader, DRACOLoader) {
 		const manager = new THREE.LoadingManager();
-		manager.onLoad = sceneReady;
+		manager.onLoad = markSceneReady;
 		manager.onError = (url) => {
 			console.error('Failed to load:', url);
-			sceneReady(); // show page anyway on asset failure
+			markSceneReady(); // show page anyway on asset failure
 		};
 
 		const gltfLoader = new GLTFLoader(manager);
+		const dracoLoader = new DRACOLoader();
+		dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+		gltfLoader.setDRACOLoader(dracoLoader);
 		const rgbeLoader = new RGBELoader(manager);
+		raycaster = new THREE.Raycaster();
+		pointer = new THREE.Vector2();
 
 		scene = new THREE.Scene();
 		camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
 		camera.position.z = 5;
 		renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 		renderer.setSize(window.innerWidth, window.innerHeight);
-		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+		renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.innerWidth < 768 ? 1.5 : 2));
 
 		rgbeLoader.load(
 			'/studio_small_03_1k.hdr',
@@ -174,7 +193,7 @@
 		scene.add(backLight);
 
 		gltfLoader.load(
-			'/head.glb',
+			'/head33.glb',
 			(gltf) => {
 				head = gltf.scene;
 				head.traverse((child) => {
@@ -207,7 +226,7 @@
 		loadingTimeout = setTimeout(() => {
 			if (!isSceneReady) {
 				console.warn('Scene loading timed out after 10 seconds');
-				sceneReady();
+				markSceneReady();
 			}
 		}, 10000);
 	}
@@ -263,7 +282,7 @@
 				x: -1.1, y: 1.1, z: 0.8,
 				mobileX: -0.6, mobileY: 0.9, mobileZ: 0.5,
 				animation: {
-					startX: -10,     // Come from left
+					startX: -10,
 					startY: 10,
 					startZ: -18,
 					delay: 1.1
@@ -281,21 +300,21 @@
 					delay: 1.2
 				}
 			},
-			{ 
-				file: '/react_logo.glb', 
-				scale: 0.15, 
+			{
+				file: '/react_logo.glb',
+				scale: 0.15,
 				x: 1.1, y: -1.0, z: 0.8,
 				mobileX: 0.7, mobileY: -0.3, mobileZ: 0.5,
 				animation: {
 					startX: 3,
-					startY: -10,     // Come from bottom
+					startY: -10,
 					startZ: -14,
 					delay: 1.3
 				}
 			}
 		];
 
-		logoFiles.forEach((data) => {
+		logoFiles.forEach((data, index) => {
 			loader.load(
 				data.file,
 				(gltf) => {
@@ -339,12 +358,19 @@
 						data: data, // Store original data for resize
 						baseScale: data.scale, // Store base scale for resize
 						originalPos: { x: worldPosX, y: worldPosY, z: posZ }, // World position
-						originalRotation: { y: data.rotationY || 0 },
+						originalRotation: { x: logo.rotation.x, y: data.rotationY || 0, z: logo.rotation.z },
+						introSpin: {
+							x: (index % 2 === 0 ? 1 : -1) * Math.PI * 0.8,
+							y: (index % 3 === 0 ? -1 : 1) * Math.PI * 1.15,
+							z: (index % 2 === 0 ? -1 : 1) * Math.PI * 0.55
+						},
 						animConfig: animConfig, // Store animation config per logo
 						floatSpeed: 0.2 + Math.random() * 0.5,
 						floatOffset: Math.random() * Math.PI * 2,
 						floatAmount: LOGO_FLOAT_AMOUNT + Math.random() * LOGO_FLOAT_AMOUNT * 0.5,
-						rotationSpeed: 0.1 + Math.random() * 0.15
+						rotationSpeed: 0.1 + Math.random() * 0.15,
+						isFloating: false,
+						floatStartTime: 0
 					});
 
 					// Add directly to scene instead of headGroup
@@ -356,26 +382,7 @@
 		});
 	}
 
-	function handleSceneReady() {
-		isSceneReady = true;
-		startHeroReveal();
-	}
-
 	function startHeroReveal() {
-		// Smoothly fade out preloader first
-		const preloader = document.querySelector('.preloader');
-		if (preloader) {
-			gsap.to(preloader, {
-				opacity: 0,
-				duration: 0.8,
-				ease: 'power2.inOut',
-				onComplete: () => {
-					preloader.remove();
-					document.body.classList.remove('loading');
-				}
-			});
-		}
-
 		// After preloader starts fading, reveal content
 		gsap.to(canvas, { opacity: 1, duration: 1.5, delay: 0.5, ease: 'power2.out' });
 
@@ -460,10 +467,10 @@
 		}
 
 		// Animate logos individually with their own settings
-		let maxDelay = 0;
 		logos.forEach((logoObj) => {
 			const finalScale = logoObj.baseScale * getLogoScaleMultiplier();
 			const anim = logoObj.animConfig; // Use per-logo animation config
+			const { originalRotation, introSpin } = logoObj;
 			
 			// Calculate start positions with offsets
 			const startX = logoObj.originalPos.x + anim.startX;
@@ -472,6 +479,11 @@
 			
 			// Set initial position (before animation starts)
 			logoObj.mesh.position.set(startX, startY, startZ);
+			logoObj.mesh.rotation.set(
+				originalRotation.x + introSpin.x,
+				originalRotation.y + introSpin.y,
+				originalRotation.z + introSpin.z
+			);
 			
 			// Animate logo position from offset start position
 			gsap.to(logoObj.mesh.position,
@@ -481,9 +493,22 @@
 					z: logoObj.originalPos.z,
 					duration: anim.duration,
 					delay: anim.delay,
-					ease: 'power2.out'
+					ease: 'power2.out',
+					onComplete: () => {
+						logoObj.isFloating = true;
+						logoObj.floatStartTime = Date.now() * 0.001;
+					}
 				}
 			);
+
+			gsap.to(logoObj.mesh.rotation, {
+				x: originalRotation.x,
+				y: originalRotation.y,
+				z: originalRotation.z,
+				duration: anim.duration,
+				delay: anim.delay,
+				ease: 'power3.out'
+			});
 			
 			// Animate logo scale from small to final size
 			gsap.fromTo(logoObj.mesh.scale,
@@ -502,16 +527,7 @@
 				}
 			);
 			
-			// Track the longest animation time
-			const totalTime = anim.delay + anim.duration;
-			if (totalTime > maxDelay) maxDelay = totalTime;
 		});
-		
-		// Enable floating animation after all intro animations complete
-		setTimeout(() => {
-			introAnimationComplete = true;
-			floatingStartTime = Date.now() * 0.001; // Record when floating starts
-		}, maxDelay * 1000);
 	}
 
 	function addBackgroundGrid() {
@@ -530,6 +546,7 @@
 		camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.innerWidth < 768 ? 1.5 : 2));
 		if (head && headLoaded && headGroup) {
 			const newScale = getResponsiveScale();
 			const pos = getResponsivePosition();
@@ -565,11 +582,36 @@
 
 	function handleScroll() {}
 
+	function updateHeadHover(event) {
+		if (!raycaster || !camera || !head) return false;
+
+		pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+		pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+		raycaster.setFromCamera(pointer, camera);
+
+		return raycaster.intersectObject(head, true).length > 0;
+	}
+
+	function handlePointerMove(event) {
+		const hovering = updateHeadHover(event);
+		if (hovering === headHovered) return;
+
+		headHovered = hovering;
+		document.body.style.cursor = hovering ? 'pointer' : '';
+	}
+
+	function handleClick(event) {
+		if (updateHeadHover(event)) {
+			openChat();
+		}
+	}
+
 	function animate() {
 		if (paused) return; // stop RAF loop when tab is hidden
 		requestAnimationFrame(animate);
 		if (!isSceneReady) return; // <— prevents early renders
 		const time = Date.now() * 0.001;
+		const baseScale = getResponsiveScale();
 
 		if (head && headLoaded) {
 			const headFloatY = Math.sin(time * 0.3 + headFloatOffset) * 0.08;
@@ -577,35 +619,30 @@
 			head.position.x = headDriftX;
 			head.position.y = headFloatY;
 			head.rotation.y = Math.PI + Math.sin(time * 0.2 + headFloatOffset) * 0.05;
+			head.scale.setScalar(baseScale);
 		}
 
-		// Only apply floating animation after intro animation completes
-		if (introAnimationComplete) {
-			// Use relative time from when floating started to avoid jolts
-			const floatTime = time - floatingStartTime;
-			
-			// Smooth blend-in: amplitude goes from 0 to 1 over 1 second
-			const blendDuration = 1.0; // seconds
-			const blendFactor = Math.min(floatTime / blendDuration, 1.0);
-			
-			logos.forEach((obj) => {
-				const { mesh, originalPos, floatSpeed, floatOffset, floatAmount, rotationSpeed, originalRotation } = obj;
-				
-				// Apply floating with smooth blend-in
-				mesh.position.y = originalPos.y + Math.sin(floatTime * floatSpeed + floatOffset) * floatAmount * blendFactor;
-				mesh.position.x = originalPos.x + Math.cos(floatTime * floatSpeed * 0.7 + floatOffset) * floatAmount * 0.5 * blendFactor;
-				mesh.position.z = originalPos.z + Math.sin(floatTime * floatSpeed * 0.5 + floatOffset) * floatAmount * 0.3 * blendFactor;
-				mesh.rotation.y = originalRotation.y + Math.sin(floatTime * rotationSpeed + floatOffset) * 0.1 * blendFactor;
-			});
-		}
+		logos.forEach((obj) => {
+			if (!obj.isFloating) return;
+
+			const { mesh, originalPos, floatSpeed, floatAmount, rotationSpeed, originalRotation } = obj;
+			const floatTime = time - obj.floatStartTime;
+			const blendFactor = gsap.utils.clamp(0, 1, floatTime / 1.2);
+			const easedBlend = 1 - Math.pow(1 - blendFactor, 3);
+			const yWave = Math.sin(floatTime * floatSpeed);
+			const xWave = 1 - Math.cos(floatTime * floatSpeed * 0.7);
+			const zWave = Math.sin(floatTime * floatSpeed * 0.5);
+			const rotationWave = Math.sin(floatTime * rotationSpeed);
+
+			mesh.position.y = originalPos.y + yWave * floatAmount * easedBlend;
+			mesh.position.x = originalPos.x + xWave * floatAmount * 0.25 * easedBlend;
+			mesh.position.z = originalPos.z + zWave * floatAmount * 0.3 * easedBlend;
+			mesh.rotation.y = originalRotation.y + rotationWave * 0.1 * easedBlend;
+		});
 
 		renderer.render(scene, camera);
 	}
 </script>
-
-<div class="preloader">
-	<span>Loading...</span>
-</div>
 
 <section class="hero-section">
 	<canvas bind:this={canvas} class="webgl-canvas"></canvas>
@@ -642,31 +679,6 @@
 </section>
 
 <style>
-	:global(body.loading) {
-		overflow: hidden !important;
-		height: 100vh;
-		position: fixed;
-		width: 100%;
-	}
-	:global(body:not(.loading)) {
-		overflow: auto;
-		position: static;
-	}
-
-	.preloader {
-		position: fixed;
-		inset: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: black;
-		color: white;
-		z-index: 9999;
-		font-family: var(--font-heading);
-		font-size: 1.2rem;
-		opacity: 1;
-	}
-
 	.hero-section {
 		position: relative;
 		width: 100%;
@@ -681,7 +693,7 @@
 		width: 100%;
 		height: 100%;
 		z-index: 1;
-		pointer-events: none;
+		pointer-events: auto;
 		opacity: 0;
 	}
 
