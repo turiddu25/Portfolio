@@ -94,17 +94,19 @@
 
 /* Monochrome Design System */
 :root {
-  --black: #f7f4ee;
-  --black-deep: #ede8df;
-  --white: #161411;
-  --grey-soft: #6f6a62;
-  --grey-faint: rgba(22, 20, 17, 0.06);
-  --white-glow: rgba(22, 20, 17, 0.16);
-  --surface: #fffaf2;
-  --surface-muted: #eee8de;
-  --border: rgba(22, 20, 17, 0.16);
-  --border-strong: rgba(22, 20, 17, 0.34);
-  --overlay: rgba(247, 244, 238, 0.74);
+  --black: #f2e6d4;
+  --black-deep: #dcc6aa;
+  --white: #4a3426;
+  --grey-soft: #8a7564;
+  --grey-faint: rgba(74, 52, 38, 0.07);
+  --white-glow: rgba(74, 52, 38, 0.14);
+  --surface: #fff6e8;
+  --surface-muted: #ead8bf;
+  --border: rgba(74, 52, 38, 0.18);
+  --border-strong: rgba(74, 52, 38, 0.38);
+  --overlay: rgba(242, 230, 212, 0.74);
+  --accent: #a66f3f;
+  --accent-deep: #744628;
 
   --font-heading: 'Technor', sans-serif;
   --font-body: 'Supreme', sans-serif;
@@ -162,8 +164,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Focus styles for accessibility */
 a:focus, button:focus, input:focus, textarea:focus {
-  outline: 2px solid var(--white);
-  outline-offset: 2px;
+  outline: none;
 }
 
 body::before {
@@ -175,8 +176,8 @@ body::before {
   opacity: 0.18;
   mix-blend-mode: multiply;
   background-image:
-    radial-gradient(circle at 20% 30%, rgba(22, 20, 17, 0.05) 0 1px, transparent 1px),
-    radial-gradient(circle at 70% 60%, rgba(22, 20, 17, 0.035) 0 1px, transparent 1px);
+    radial-gradient(circle at 20% 30%, rgba(74, 52, 38, 0.055) 0 1px, transparent 1px),
+    radial-gradient(circle at 70% 60%, rgba(74, 52, 38, 0.04) 0 1px, transparent 1px);
   background-size: 18px 18px, 23px 23px;
 }
 
@@ -241,6 +242,6 @@ a, button {
 
 /* Selection color */
 ::selection {
-  background: var(--white);
+  background: var(--accent);
   color: var(--black);
 }

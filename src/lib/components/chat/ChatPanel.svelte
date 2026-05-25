@@ -155,7 +155,7 @@
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background: var(--white);
+		background: var(--accent);
 		animation: pulse 2s infinite;
 	}
 
@@ -233,7 +233,7 @@
 		height: 48px;
 		border: 0;
 		border-radius: 12px;
-		background: var(--white);
+		background: var(--accent);
 		color: var(--black);
 		font-size: 1.4rem;
 		cursor: pointer;

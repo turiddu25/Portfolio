@@ -55,8 +55,8 @@
 		width: 56px;
 		height: 56px;
 		border-radius: 50%;
-		border: 1px solid var(--border-strong);
-		background: var(--white);
+		border: 1px solid var(--accent-deep);
+		background: var(--accent);
 		color: var(--black);
 		cursor: pointer;
 		position: relative;
@@ -67,7 +67,7 @@
 		content: '';
 		position: absolute;
 		inset: -6px;
-		border: 1px solid var(--border-strong);
+		border: 1px solid var(--accent-deep);
 		border-radius: 50%;
 		animation: pulse-ring 4s infinite;
 	}
@@ -76,7 +76,7 @@
 	.chat-fab span::before,
 	.chat-fab span::after {
 		position: absolute;
-		background: var(--black);
+		background: currentColor;
 		border-radius: 50%;
 	}
 

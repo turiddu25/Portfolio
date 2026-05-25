@@ -58,6 +58,12 @@ export const project = defineType({
       rows: 12,
     }),
     defineField({
+      name: 'accentColour',
+      title: 'Accent Colour',
+      type: 'string',
+      description: 'Optional hex colour used to tint this project on the portfolio',
+    }),
+    defineField({
       name: 'technologies',
       title: 'Technologies',
       type: 'array',

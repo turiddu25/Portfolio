@@ -9,12 +9,12 @@
 	let section;
 
 	onMount(() => {
-		const rows = section.querySelectorAll('.project-row');
+		const cards = section.querySelectorAll('.project-card');
 		const observer = new IntersectionObserver(
 			(entries) => {
 				if (!entries.some((entry) => entry.isIntersecting)) return;
 
-				gsap.from(rows, {
+				gsap.from(cards, {
 					y: 40,
 					duration: 0.75,
 					stagger: 0.06,
@@ -64,7 +64,7 @@
 	}
 
 	.section-heading p {
-		color: var(--grey-soft);
+		color: var(--accent);
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
 		font-size: 0.85rem;

@@ -25,6 +25,7 @@ export async function getProjects() {
 		role,
 		image,
 		previewSvg,
+		accentColour,
 		gallery,
 		technologies,
 		githubUrl,
@@ -34,22 +35,3 @@ export async function getProjects() {
 	return await client.fetch(query);
 }
 
-// GROQ query to fetch a single project by slug
-export async function getProjectBySlug(slug: string) {
-	const query = `*[_type == "project" && slug.current == $slug][0] {
-		_id,
-		title,
-		slug,
-		description,
-		year,
-		role,
-		image,
-		previewSvg,
-		gallery,
-		technologies,
-		githubUrl,
-		liveUrl,
-		featured
-	}`;
-	return await client.fetch(query, { slug });
-}

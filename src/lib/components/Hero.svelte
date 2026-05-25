@@ -200,9 +200,9 @@
 				head.traverse((child) => {
 					if (child.isMesh) {
 						child.material = new THREE.MeshStandardMaterial({
-							color: 0x333333,
-							roughness: 0.4,
-							metalness: 0.9
+							color: 0xb07a3f,
+							roughness: 0.24,
+							metalness: 1.0
 						});
 					}
 				});
@@ -323,9 +323,9 @@
 					logo.traverse((child) => {
 						if (child.isMesh) {
 							child.material = new THREE.MeshStandardMaterial({
-								color: 0x3a3732,
-								roughness: 0.18,
-								metalness: 0.75
+								color: 0xc08a4b,
+								roughness: 0.22,
+								metalness: 0.95
 							});
 						}
 					});
@@ -737,7 +737,7 @@
 	.name-line-2 {
 		font-weight: 700;
 		font-style: italic;
-		color: var(--grey-soft);
+		color: var(--accent);
 		margin-left: 2rem;
 	}
 
@@ -753,7 +753,7 @@
 		bottom: 0;
 		left: 0;
 		height: 3px;
-		background: var(--white);
+		background: var(--accent);
 		width: 0;
 	}
 
@@ -783,7 +783,7 @@
 		width: 0;
 		height: 0;
 		border-radius: 50%;
-		background: var(--white);
+		background: var(--accent);
 		transform: translate(-50%, -50%);
 		transition: width 0.6s var(--ease), height 0.6s var(--ease);
 		z-index: -1;
@@ -791,6 +791,7 @@
 
 	.cv-button:hover {
 		color: var(--black);
+		border-color: var(--accent);
 		transform: translateY(-4px);
 	}
 
@@ -839,6 +840,7 @@
 	}
 
 	.scroll-arrow {
+		color: var(--accent);
 		animation: bounce 2s ease-in-out infinite;
 	}
 

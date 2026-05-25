@@ -12,6 +12,7 @@ export type Project = {
 	imageSrcset: string;
 	previewImage: string;
 	previewSvg: string;
+	accentColour: string;
 	heroImage: string;
 	gallery: string[];
 	githubUrl?: string;
@@ -58,6 +59,7 @@ export function normalizeProject(project: any): Project {
 		imageSrcset: image ? imageSrcset(image) : '',
 		previewImage: image ? imageUrl(image, 600, 450) : '',
 		previewSvg: project.previewSvg || '',
+		accentColour: project.accentColour || '',
 		heroImage: image ? imageUrl(image, 1600, 950) : '',
 		gallery: (project.gallery || []).map((item: unknown) => imageUrl(item, 1400, 900)),
 		githubUrl: project.githubUrl,
