@@ -53,7 +53,7 @@
 </script>
 
 <svelte:head>
-	<title>Colin Salvatore Nardo — Portfolio</title>
+	<title>Colin Salvatore Nardo</title>
 	<meta name="description" content="My personal portfolio." />
 	<meta property="og:title" content="Colin Salvatore Nardo" />
 	<meta property="og:description" content="My personal portfolio." />
@@ -64,7 +64,7 @@
 	<meta property="og:image:height" content="630" />
 	<meta property="og:image:alt" content="Colin Salvatore Nardo portfolio preview" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Colin Salvatore Nardo — Portfolio" />
+	<meta name="twitter:title" content="Colin Salvatore Nardo" />
 	<meta name="twitter:description" content="My personal portfolio." />
 	<meta name="twitter:image" content="https://nardocol.in/banner.png" />
 </svelte:head>
