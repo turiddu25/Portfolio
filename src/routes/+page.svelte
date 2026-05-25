@@ -54,10 +54,19 @@
 
 <svelte:head>
 	<title>Colin Salvatore Nardo — Portfolio</title>
-	<meta name="description" content="Portfolio of Colin Salvatore Nardo — software engineer. Explore projects, chat with an AI clone, and view my CV." />
-	<meta property="og:title" content="Colin Salvatore Nardo — Portfolio" />
-	<meta property="og:description" content="Software engineer portfolio featuring interactive 3D visuals, projects, and an AI chatbot." />
+	<meta name="description" content="My personal portfolio." />
+	<meta property="og:title" content="Colin Salvatore Nardo" />
+	<meta property="og:description" content="My personal portfolio." />
 	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://nardocol.in/" />
+	<meta property="og:image" content="https://nardocol.in/banner.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:image:alt" content="Colin Salvatore Nardo portfolio preview" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Colin Salvatore Nardo — Portfolio" />
+	<meta name="twitter:description" content="My personal portfolio." />
+	<meta name="twitter:image" content="https://nardocol.in/banner.png" />
 </svelte:head>
 
 <main>
