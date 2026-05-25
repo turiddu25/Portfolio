@@ -5,13 +5,13 @@ export type Project = {
 	title: string;
 	slug: string;
 	description: string;
-	details: string;
 	year: string;
 	role: string;
 	tech: string[];
 	image: string;
 	imageSrcset: string;
 	previewImage: string;
+	previewSvg: string;
 	heroImage: string;
 	gallery: string[];
 	githubUrl?: string;
@@ -51,13 +51,13 @@ export function normalizeProject(project: any): Project {
 		title: project.title,
 		slug: slug || project._id,
 		description: project.description,
-		details: project.details,
 		year: project.year || '',
 		role: project.role || '',
 		tech: project.technologies || [],
 		image: image ? imageUrl(image, 800, 600) : '',
 		imageSrcset: image ? imageSrcset(image) : '',
 		previewImage: image ? imageUrl(image, 600, 450) : '',
+		previewSvg: project.previewSvg || '',
 		heroImage: image ? imageUrl(image, 1600, 950) : '',
 		gallery: (project.gallery || []).map((item: unknown) => imageUrl(item, 1400, 900)),
 		githubUrl: project.githubUrl,
@@ -65,4 +65,3 @@ export function normalizeProject(project: any): Project {
 		featured: project.featured
 	};
 }
-

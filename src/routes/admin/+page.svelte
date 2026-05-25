@@ -173,7 +173,7 @@
 		width: 100%;
 		padding: 0.75rem 1rem;
 		background: transparent;
-		border: 1px solid rgba(255, 255, 255, 0.3);
+		border: 1px solid var(--border-strong);
 		border-radius: 8px;
 		color: var(--white);
 	}
@@ -223,9 +223,9 @@
 
 	.table-container {
 		overflow-x: auto;
-		border: 1px solid var(--white);
+		border: 1px solid var(--border);
 		border-radius: 16px;
-		background: rgba(0, 0, 0, 0.7);
+		background: rgba(255, 250, 242, 0.72);
         backdrop-filter: blur(10px);
 	}
 
@@ -237,7 +237,7 @@
 	th, td {
 		padding: 1rem 1.5rem;
 		text-align: left;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		border-bottom: 1px solid var(--border);
 	}
     
     tbody tr:last-child td {

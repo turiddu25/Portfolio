@@ -7,6 +7,7 @@
 	import { openChat } from '$lib/stores/chatStore';
 	import { sceneReady as sceneReadyStore } from '$lib/stores/sceneStore';
 
+	let heroSection;
 	let canvas;
 	let THREE;
 	let scene, camera, renderer, head;
@@ -322,9 +323,9 @@
 					logo.traverse((child) => {
 						if (child.isMesh) {
 							child.material = new THREE.MeshStandardMaterial({
-								color: 0xc5c5c5,
-								roughness: 0.1,
-								metalness: 0.95
+								color: 0x3a3732,
+								roughness: 0.18,
+								metalness: 0.75
 							});
 						}
 					});
@@ -537,7 +538,7 @@
 			vertices.push(Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 2 - 5);
 		}
 		geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-		const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, transparent: true, opacity: 0.05 });
+		const material = new THREE.PointsMaterial({ color: 0x161411, size: 0.05, transparent: true, opacity: 0.05 });
 		const points = new THREE.Points(geometry, material);
 		scene.add(points);
 	}
@@ -583,7 +584,16 @@
 	function handleScroll() {}
 
 	function updateHeadHover(event) {
-		if (!raycaster || !camera || !head) return false;
+		if (!raycaster || !camera || !head || !heroSection) return false;
+
+		const rect = heroSection.getBoundingClientRect();
+		const isInsideHero =
+			event.clientX >= rect.left &&
+			event.clientX <= rect.right &&
+			event.clientY >= rect.top &&
+			event.clientY <= rect.bottom;
+
+		if (!isInsideHero) return false;
 
 		pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
 		pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -644,7 +654,7 @@
 	}
 </script>
 
-<section class="hero-section">
+<section bind:this={heroSection} class="hero-section">
 	<canvas bind:this={canvas} class="webgl-canvas"></canvas>
 
 	<div class="hero-content">
@@ -795,10 +805,10 @@
 
 	@keyframes ripple {
 		0% {
-			box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+			box-shadow: 0 0 0 0 rgba(22, 20, 17, 0.24);
 		}
 		100% {
-			box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
+			box-shadow: 0 0 0 20px rgba(22, 20, 17, 0);
 		}
 	}
 

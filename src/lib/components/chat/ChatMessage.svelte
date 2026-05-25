@@ -37,8 +37,7 @@
 	.message.ai .bubble {
 		background: transparent;
 		color: var(--white);
-		border: 1px solid rgba(255, 255, 255, 0.65);
+		border: 1px solid var(--border-strong);
 		border-bottom-left-radius: 4px;
 	}
 </style>
-

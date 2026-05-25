@@ -1,35 +1,29 @@
 <script>
 	// @ts-nocheck
 	import ProjectRow from './ProjectRow.svelte';
-	import CursorPreview from './CursorPreview.svelte';
-	import { activeProjectPreview } from '$lib/stores/projectPreviewStore';
-	import { onDestroy } from 'svelte';
 
 	export let projects = [];
 
-	let activeProject = null;
+	let openProjectId = null;
 
-	const unsubscribe = activeProjectPreview.subscribe((project) => {
-		activeProject = project;
-	});
-
-	onDestroy(unsubscribe);
+	function toggleProject(project) {
+		openProjectId = openProjectId === project._id ? null : project._id;
+	}
 </script>
 
-<div class="project-list" role="presentation" on:mouseleave={() => activeProjectPreview.set(null)}>
+<div class="project-list">
 	{#each projects as project, index}
 		<ProjectRow
 			{project}
 			{index}
-			isDimmed={activeProject && activeProject._id !== project._id}
+			isOpen={openProjectId === project._id}
+			on:toggle={() => toggleProject(project)}
 		/>
 	{/each}
 </div>
 
-<CursorPreview />
-
 <style>
 	.project-list {
-		border-top: 1px solid rgba(255, 255, 255, 0.2);
+		border-top: 1px solid var(--border);
 	}
 </style>

@@ -52,7 +52,7 @@
 	footer {
 		position: relative;
 		padding: 6rem 2rem 2rem;
-		background: var(--black);
+		background: transparent;
 		overflow: hidden;
 	}
 
@@ -70,7 +70,7 @@
 		line-height: 0.78;
 		text-align: center;
 		color: transparent;
-		-webkit-text-stroke: 1px rgba(255, 255, 255, 0.2);
+		-webkit-text-stroke: 1px rgba(22, 20, 17, 0.18);
 		opacity: 0.9;
 	}
 
@@ -116,7 +116,7 @@
 	.social-link:hover {
 		color: var(--black);
 		transform: translateY(-4px);
-		box-shadow: 0 8px 16px rgba(255, 255, 255, 0.2);
+		box-shadow: 0 8px 16px rgba(22, 20, 17, 0.14);
 	}
 
 	.social-link:hover::before {

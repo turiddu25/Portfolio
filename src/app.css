@@ -94,11 +94,17 @@
 
 /* Monochrome Design System */
 :root {
-  --black: #000000;
-  --white: #ffffff;
-  --grey-soft: #b3b3b3;
-  --grey-faint: rgba(255, 255, 255, 0.05);
-  --white-glow: rgba(255, 255, 255, 0.2);
+  --black: #f7f4ee;
+  --black-deep: #ede8df;
+  --white: #161411;
+  --grey-soft: #6f6a62;
+  --grey-faint: rgba(22, 20, 17, 0.06);
+  --white-glow: rgba(22, 20, 17, 0.16);
+  --surface: #fffaf2;
+  --surface-muted: #eee8de;
+  --border: rgba(22, 20, 17, 0.16);
+  --border-strong: rgba(22, 20, 17, 0.34);
+  --overlay: rgba(247, 244, 238, 0.74);
 
   --font-heading: 'Technor', sans-serif;
   --font-body: 'Supreme', sans-serif;
@@ -119,7 +125,8 @@ html {
 }
 
 body {
-  background: var(--black);
+  background:
+    radial-gradient(ellipse at top, var(--surface) 0%, var(--black) 45%, var(--black-deep) 100%);
   color: var(--white);
   font-family: var(--font-body);
   font-weight: 400;
@@ -159,6 +166,20 @@ a:focus, button:focus, input:focus, textarea:focus {
   outline-offset: 2px;
 }
 
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.18;
+  mix-blend-mode: multiply;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(22, 20, 17, 0.05) 0 1px, transparent 1px),
+    radial-gradient(circle at 70% 60%, rgba(22, 20, 17, 0.035) 0 1px, transparent 1px);
+  background-size: 18px 18px, 23px 23px;
+}
+
 /* Global transitions */
 a, button {
   transition: all 0.3s var(--ease);
@@ -166,8 +187,8 @@ a, button {
 
 /* Glass effect utility */
 .glass {
-  background: rgba(0, 0, 0, 0.7);
-  border: 1px solid var(--white);
+  background: rgba(255, 250, 242, 0.82);
+  border: 1px solid var(--border);
   border-radius: 24px;
   backdrop-filter: blur(10px);
 }

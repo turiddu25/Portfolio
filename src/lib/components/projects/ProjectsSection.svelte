@@ -50,7 +50,7 @@
 	.projects-section {
 		position: relative;
 		z-index: 10;
-		background: var(--black);
+		background: transparent;
 		padding: clamp(5rem, 10vw, 9rem) 1.5rem;
 	}
 

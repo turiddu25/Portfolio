@@ -23,19 +23,11 @@ export const project = defineType({
     }),
     defineField({
       name: 'description',
-      title: 'Short Description',
+      title: 'Description',
       type: 'text',
-      description: 'Brief description shown on the project card',
+      description: 'Short project description shown across the site',
       rows: 3,
-      validation: (Rule) => Rule.required().max(200),
-    }),
-    defineField({
-      name: 'details',
-      title: 'Detailed Description',
-      type: 'text',
-      description: 'Full description shown on the project detail page',
-      rows: 5,
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => Rule.required().max(300),
     }),
     defineField({
       name: 'year',
@@ -57,6 +49,13 @@ export const project = defineType({
         hotspot: true,
       },
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'previewSvg',
+      title: 'Preview SVG',
+      type: 'text',
+      description: 'Optional inline SVG markup used for fine-line project previews',
+      rows: 12,
     }),
     defineField({
       name: 'technologies',

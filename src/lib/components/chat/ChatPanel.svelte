@@ -94,7 +94,7 @@
 		inset: 0;
 		z-index: 80;
 		border: 0;
-		background: rgba(0, 0, 0, 0.5);
+		background: rgba(22, 20, 17, 0.22);
 		backdrop-filter: blur(4px);
 		cursor: pointer;
 	}
@@ -124,7 +124,7 @@
 		align-items: center;
 		gap: 0.85rem;
 		padding: 1.25rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+		border-bottom: 1px solid var(--border);
 	}
 
 	.avatar {
@@ -167,7 +167,7 @@
 		margin-left: auto;
 		width: 40px;
 		height: 40px;
-		border: 1px solid rgba(255, 255, 255, 0.35);
+		border: 1px solid var(--border-strong);
 		border-radius: 50%;
 		background: transparent;
 		color: var(--white);
@@ -190,7 +190,7 @@
 		display: flex;
 		gap: 0.45rem;
 		padding: 1rem 1.2rem;
-		border: 1px solid rgba(255, 255, 255, 0.65);
+		border: 1px solid var(--border-strong);
 		border-radius: 16px 16px 16px 4px;
 	}
 
@@ -214,14 +214,14 @@
 		display: flex;
 		gap: 0.75rem;
 		padding: 1.25rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.12);
+		border-top: 1px solid var(--border);
 	}
 
 	.chat-input input {
 		flex: 1;
 		min-width: 0;
 		background: transparent;
-		border: 1px solid rgba(255, 255, 255, 0.32);
+		border: 1px solid var(--border-strong);
 		border-radius: 12px;
 		padding: 0.875rem 1rem;
 		color: var(--white);

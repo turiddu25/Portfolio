@@ -1,27 +1,33 @@
 <section class="about-section" id="about">
 	<div class="about-inner">
-		<p>I am a student at the University of Glasgow and upcoming Data Analyst intern at Hamilton Ross Group.</p>
+		<p>CS student at the University of Glasgow. Incoming Data Analyst intern at <span>Hamilton Ross Group</span>.</p>
 	</div>
 </section>
 
 <style>
 	.about-section {
-		background: var(--black);
-		padding: 5rem 1.5rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.12);
+		background: transparent;
+		padding: 10rem 1.5rem;
+		border-top: 1px solid var(--border);
 	}
 
 	.about-inner {
 		width: min(1200px, 100%);
 		margin: 0 auto;
-		font-size: clamp(1.2rem, 2vw, 1.8rem);
-		line-height: 1.35;
-		color: rgba(255, 255, 255, 0.88);
+		font-family: var(--font-heading);
+		font-size: clamp(1.75rem, 4vw, 3rem);
+		line-height: 1.3;
+		color: var(--grey-soft);
+	}
+
+	.about-inner :global(strong),
+	.about-inner span {
+		color: var(--white);
 	}
 
 	@media (max-width: 767px) {
 		.about-section {
-			padding: 4rem 1rem;
+			padding: 6rem 1rem;
 		}
 	}
 </style>

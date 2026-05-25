@@ -55,19 +55,19 @@
 		width: 56px;
 		height: 56px;
 		border-radius: 50%;
-		border: 1px solid rgba(255, 255, 255, 0.35);
+		border: 1px solid var(--border-strong);
 		background: var(--white);
 		color: var(--black);
 		cursor: pointer;
 		position: relative;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+		box-shadow: 0 10px 30px rgba(22, 20, 17, 0.18);
 	}
 
 	.chat-fab::after {
 		content: '';
 		position: absolute;
 		inset: -6px;
-		border: 1px solid rgba(255, 255, 255, 0.35);
+		border: 1px solid var(--border-strong);
 		border-radius: 50%;
 		animation: pulse-ring 4s infinite;
 	}
@@ -98,9 +98,9 @@
 
 	.peek {
 		max-width: min(300px, calc(100vw - 2rem));
-		border: 1px solid rgba(255, 255, 255, 0.3);
+		border: 1px solid var(--border-strong);
 		border-radius: 14px;
-		background: rgba(0, 0, 0, 0.78);
+		background: rgba(255, 250, 242, 0.88);
 		color: var(--white);
 		padding: 0.8rem 1rem;
 		backdrop-filter: blur(10px);
