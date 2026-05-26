@@ -1,197 +1,259 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getProjects } from '$lib/sanityClient';
-	import { normalizeProject, type Project } from '$lib/projects';
 
-	let projects: Project[] = [];
-	let isLoading = true;
+	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+	type Conversation = {
+		id: string | number;
+		user_message: string;
+		ai_response: string;
+		timestamp: string;
+		formattedTimestamp?: string;
+	};
+
+	let conversations: Conversation[] = [];
+	let isAuthenticated = false;
+	let isLoading = false;
 	let error = '';
 
-	onMount(async () => {
+	let username = '';
+	let password = '';
+
+	async function getConversations() {
+		if (!username || !password) {
+			error = 'Username and password are required.';
+			return;
+		}
+
+		isLoading = true;
+		error = '';
+
 		try {
-			const data = await getProjects();
-			projects = data.map(normalizeProject);
+			const credentials = btoa(`${username}:${password}`);
+
+			const response = await fetch(`${API_BASE_URL}/admin/conversations`, {
+				headers: {
+					Authorization: `Basic ${credentials}`
+				}
+			});
+
+			if (response.status === 401) {
+				throw new Error('Invalid username or password.');
+			}
+			if (!response.ok) {
+				throw new Error('Failed to fetch conversations from the server.');
+			}
+
+			const data: Conversation[] = await response.json();
+			conversations = data.map((convo: Conversation) => ({
+				...convo,
+				timestamp: new Date(convo.timestamp).toLocaleString()
+			}));
+
+			isAuthenticated = true;
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to load project entries.';
+			if (err instanceof Error) {
+				error = err.message;
+			} else {
+				error = 'An unknown error occurred.';
+			}
+			isAuthenticated = false;
 		} finally {
 			isLoading = false;
 		}
-	});
+	}
 </script>
 
-<svelte:head>
-	<title>Project Entries | Admin</title>
-</svelte:head>
+<div class="admin-container">
+	{#if !isAuthenticated}
+		<div class="login-wrapper glass">
+			<h1>Admin Login</h1>
+			<p>Enter your backend admin credentials to view conversations.</p>
+			<form on:submit|preventDefault={getConversations}>
+				<div class="form-group">
+					<label for="username">Username</label>
+					<input id="username" type="text" bind:value={username} required />
+				</div>
+				<div class="form-group">
+					<label for="password">Password</label>
+					<input id="password" type="password" bind:value={password} required />
+				</div>
 
-<main class="admin-container">
-	<section class="admin-header">
-		<p>Sanity Entries</p>
-		<h1>Projects</h1>
-	</section>
+				{#if error}
+					<p class="error-message">{error}</p>
+				{/if}
 
-	{#if isLoading}
-		<p class="state">Loading project entries...</p>
-	{:else if error}
-		<p class="state error">{error}</p>
-	{:else}
-		<div class="entries">
-			{#each projects as project}
-				<article class="entry">
-					<div class="entry-main">
-						<h2>{project.title}</h2>
-						<p>{project.description}</p>
-					</div>
-
-					<div class="entry-meta">
-						{#if project.year}
-							<span>{project.year}</span>
-						{/if}
-						{#if project.role}
-							<span>{project.role}</span>
-						{/if}
-						<span>{project.previewSvg ? 'Preview SVG' : 'No SVG'}</span>
-						{#if project.accentColour}
-							<span class="colour" style={`--entry-colour: ${project.accentColour}`}>
-								{project.accentColour}
-							</span>
-						{/if}
-					</div>
-
-					{#if project.tech.length}
-						<div class="tags">
-							{#each project.tech as tag}
-								<span>{tag}</span>
-							{/each}
-						</div>
+				<button type="submit" disabled={isLoading}>
+					{#if isLoading}
+						Loading...
+					{:else}
+						Login
 					{/if}
+				</button>
+			</form>
+		</div>
+	{:else}
+		<div class="conversations-wrapper">
+			<h1>Conversation History</h1>
+			<p>Showing the {conversations.length} most recent conversations.</p>
 
-					<div class="links">
-						{#if project.liveUrl}
-							<a href={project.liveUrl} target="_blank" rel="noopener noreferrer">Live</a>
-						{/if}
-						{#if project.githubUrl}
-							<a href={project.githubUrl} target="_blank" rel="noopener noreferrer">GitHub</a>
-						{/if}
-					</div>
-				</article>
-			{/each}
+			<div class="table-container">
+				<table>
+					<thead>
+						<tr>
+							<th>Timestamp</th>
+							<th>User Message</th>
+							<th>AI Response</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each conversations as conversation (conversation.id)}
+							<tr>
+								<td class="timestamp">{conversation.timestamp}</td>
+								<td>{conversation.user_message}</td>
+								<td>{conversation.ai_response}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
 		</div>
 	{/if}
-</main>
+</div>
 
 <style>
 	.admin-container {
 		min-height: 100vh;
 		background: var(--black);
 		color: var(--white);
-		padding: clamp(2rem, 5vw, 5rem) 1.5rem;
+		padding: 4rem 2rem;
+		display: flex;
+		align-items: flex-start;
+		justify-content: center;
 		font-family: var(--font-body);
 	}
 
-	.admin-header,
-	.entries {
-		width: min(1200px, 100%);
-		margin: 0 auto;
-	}
-
-	.admin-header {
-		margin-bottom: 3rem;
-	}
-
-	.admin-header p {
-		margin: 0 0 0.5rem;
-		color: var(--accent);
-		text-transform: uppercase;
-		letter-spacing: 0.12em;
-		font-size: 0.85rem;
-	}
-
-	h1,
-	h2 {
-		margin: 0;
-		font-family: var(--font-heading);
+	.login-wrapper {
+		width: 100%;
+		max-width: 400px;
+		padding: 2rem;
+		text-align: center;
 	}
 
 	h1 {
-		font-size: clamp(3rem, 8vw, 7rem);
-		line-height: 0.9;
+		font-family: var(--font-heading);
+		font-size: 2rem;
+		margin-bottom: 0.5rem;
 	}
 
-	.entries {
-		display: grid;
-		gap: 1rem;
-	}
-
-	.entry {
-		border: 1px solid var(--border);
-		background: rgba(255, 246, 232, 0.48);
-		padding: 1.25rem;
-	}
-
-	.entry-main {
-		display: grid;
-		grid-template-columns: minmax(220px, 0.35fr) minmax(0, 1fr);
-		gap: 1rem;
-		align-items: start;
-	}
-
-	h2 {
-		font-size: clamp(1.4rem, 2.5vw, 2.2rem);
-		line-height: 1;
-	}
-
-	.entry-main p {
-		margin: 0;
+	.login-wrapper p {
 		color: var(--grey-soft);
-		line-height: 1.45;
+		margin-bottom: 2rem;
 	}
 
-	.entry-meta,
-	.tags,
-	.links {
+	form {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 0.65rem;
-		margin-top: 1rem;
-		color: var(--grey-soft);
-		font-size: 0.85rem;
+		flex-direction: column;
+		gap: 1.5rem;
 	}
 
-	.entry-meta span,
-	.tags span,
-	.links a {
-		color: inherit;
-		text-decoration: none;
+	.form-group {
+		text-align: left;
 	}
 
-	.colour::before {
-		content: '';
-		display: inline-block;
-		width: 0.75rem;
-		height: 0.75rem;
-		margin-right: 0.35rem;
-		border-radius: 50%;
-		background: var(--entry-colour);
-		vertical-align: -0.08rem;
+	label {
+		display: block;
+		margin-bottom: 0.5rem;
+		font-weight: 500;
 	}
 
-	.links a {
-		color: var(--accent);
+	input {
+		width: 100%;
+		padding: 0.75rem 1rem;
+		background: transparent;
+		border: 1px solid var(--border-strong);
+		border-radius: 8px;
+		color: var(--white);
 	}
 
-	.state {
-		width: min(1200px, 100%);
-		margin: 0 auto;
-		color: var(--grey-soft);
+	button {
+		padding: 0.75rem 1rem;
+		background: var(--accent);
+		color: var(--black);
+		border: none;
+		border-radius: 8px;
+		font-weight: 600;
+		font-family: var(--font-heading);
+		cursor: pointer;
+		transition: transform 0.2s var(--ease);
 	}
 
-	.error {
+	button:hover {
+		transform: translateY(-2px);
+	}
+
+	button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.error-message {
 		color: #9f3f2f;
+		background: rgba(159, 63, 47, 0.1);
+		padding: 0.5rem;
+		border-radius: 4px;
+		margin: 0;
 	}
 
-	@media (max-width: 760px) {
-		.entry-main {
-			grid-template-columns: 1fr;
-		}
+	.conversations-wrapper {
+		width: 100%;
+		max-width: 1200px;
+	}
+
+	.conversations-wrapper h1 {
+		margin-bottom: 0.25rem;
+	}
+
+	.conversations-wrapper p {
+		color: var(--grey-soft);
+		margin-bottom: 2rem;
+	}
+
+	.table-container {
+		overflow-x: auto;
+		border: 1px solid var(--border);
+		border-radius: 16px;
+		background: rgba(255, 246, 232, 0.62);
+		backdrop-filter: blur(10px);
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	th,
+	td {
+		padding: 1rem 1.5rem;
+		text-align: left;
+		border-bottom: 1px solid var(--border);
+	}
+
+	tbody tr:last-child td {
+		border-bottom: none;
+	}
+
+	thead {
+		background: var(--grey-faint);
+	}
+
+	th {
+		font-family: var(--font-heading);
+		font-weight: 600;
+	}
+
+	.timestamp {
+		color: var(--grey-soft);
+		white-space: nowrap;
 	}
 </style>

@@ -21,21 +21,18 @@ Paste this into the Sanity **Preview SVG** field.
       <path d="M272 154 V176" opacity="0.35"/>
 
       <g opacity="0.72">
+        <circle cx="304" cy="156" r="2.8"/>
         <circle cx="322" cy="146" r="3.5"/>
+        <circle cx="330" cy="166" r="2.5"/>
         <circle cx="346" cy="132" r="4"/>
+        <circle cx="356" cy="176" r="2.8"/>
         <circle cx="374" cy="150" r="3"/>
         <circle cx="402" cy="118" r="3.5"/>
+        <circle cx="410" cy="166" r="2.5"/>
         <circle cx="430" cy="144" r="3"/>
         <circle cx="462" cy="130" r="4"/>
         <circle cx="382" cy="190" r="3.5"/>
         <circle cx="428" cy="194" r="3"/>
-      </g>
-
-      <g opacity="0.28">
-        <path d="M296 158 C322 150 346 140 374 130"/>
-        <path d="M298 162 C332 168 358 178 386 194"/>
-        <path d="M300 154 C334 128 374 116 420 118"/>
-        <path d="M302 160 C354 142 402 136 462 130"/>
       </g>
     </g>
 
@@ -55,11 +52,6 @@ Paste this into the Sanity **Preview SVG** field.
       <circle cx="494" cy="381" r="4" fill="currentColor" stroke="none"/>
       <circle cx="542" cy="381" r="4" fill="currentColor" stroke="none"/>
       <circle cx="588" cy="381" r="4" fill="currentColor" stroke="none"/>
-    </g>
-
-    <g opacity="0.26">
-      <line x1="518" y1="214" x2="518" y2="258"/>
-      <line x1="518" y1="310" x2="518" y2="352"/>
     </g>
 
     <g opacity="0.32">
