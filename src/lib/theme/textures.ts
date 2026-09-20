@@ -72,10 +72,14 @@ function toNormalMap(source: HTMLCanvasElement, strength: number) {
 	for (let y = 0; y < size; y++) {
 		for (let x = 0; x < size; x++) {
 			const dx =
-				height(x - 1, y - 1) + 2 * height(x - 1, y) + height(x - 1, y + 1) -
+				height(x - 1, y - 1) +
+				2 * height(x - 1, y) +
+				height(x - 1, y + 1) -
 				(height(x + 1, y - 1) + 2 * height(x + 1, y) + height(x + 1, y + 1));
 			const dy =
-				height(x - 1, y - 1) + 2 * height(x, y - 1) + height(x + 1, y - 1) -
+				height(x - 1, y - 1) +
+				2 * height(x, y - 1) +
+				height(x + 1, y - 1) -
 				(height(x - 1, y + 1) + 2 * height(x, y + 1) + height(x + 1, y + 1));
 
 			// three.js expects OpenGL-convention normal maps (+G points along +V),
@@ -97,7 +101,12 @@ function toNormalMap(source: HTMLCanvasElement, strength: number) {
 }
 
 /** Build (and memoise) a three.js texture from a painter function. */
-export function canvasTexture(THREE: any, key: string, painter: Painter, options: TextureOptions = {}) {
+export function canvasTexture(
+	THREE: any,
+	key: string,
+	painter: Painter,
+	options: TextureOptions = {}
+) {
 	const { size = 512, repeat = 1, asNormal = false, strength = 2, srgb = false, levels } = options;
 	const cacheKey = `${key}|${size}|${repeat}|${asNormal}|${strength}|${srgb}|${levels ?? ''}`;
 	if (cache.has(cacheKey)) return cache.get(cacheKey);
@@ -276,7 +285,15 @@ export function veined(base: string, vein: string): Painter {
  */
 /** Offsets for the 8 neighbouring tiles, so a bloom drawn near an edge wraps. */
 const WRAP_DIRS = [
-	[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]
+	[0, 0],
+	[1, 0],
+	[-1, 0],
+	[0, 1],
+	[0, -1],
+	[1, 1],
+	[1, -1],
+	[-1, 1],
+	[-1, -1]
 ] as const;
 
 function blooms(
@@ -328,7 +345,10 @@ export const clouds: Painter = (ctx, size) => {
 			let amp = 0.5;
 			let freq = 0.02;
 			for (let o = 0; o < 4; o++) {
-				v += amp * (Math.sin(x * freq + noise(o, 1, 59) * 6.28) * Math.cos(y * freq * 1.3 + noise(o, 2, 61) * 6.28));
+				v +=
+					amp *
+					(Math.sin(x * freq + noise(o, 1, 59) * 6.28) *
+						Math.cos(y * freq * 1.3 + noise(o, 2, 61) * 6.28));
 				amp *= 0.5;
 				freq *= 2.1;
 			}

@@ -80,7 +80,8 @@ export const materialPresets: MaterialPreset[] = [
 		name: 'Liquid chrome',
 		family: 'metal',
 		look: 'A mirror: the room slides across the form as it floats, with a faint petrol shimmer where the silhouette turns away.',
-		risks: 'Mirror metal shows whatever the HDR shows — it picks up very little of the page palette.',
+		risks:
+			'Mirror metal shows whatever the HDR shows — it picks up very little of the page palette.',
 		build({ THREE, isHead }) {
 			return new THREE.MeshPhysicalMaterial({
 				color: pick(isHead, 0xc2c8d0, 0xdfe4ea),
@@ -276,7 +277,10 @@ export const materialPresets: MaterialPreset[] = [
 				clearcoat: 1,
 				clearcoatRoughness: 0.08,
 				envMapIntensity: pick(isHead, 1.3, 1.6),
-				iridescenceThicknessMap: canvasTexture(THREE, 'pearl-film', clouds, { size: 512, repeat: 2 })
+				iridescenceThicknessMap: canvasTexture(THREE, 'pearl-film', clouds, {
+					size: 512,
+					repeat: 2
+				})
 			});
 		}
 	},
@@ -287,7 +291,8 @@ export const materialPresets: MaterialPreset[] = [
 		name: 'Frosted glass',
 		family: 'glass',
 		look: 'Satin-frosted casting: the page shows through as a soft bloom, the silhouette held by the frosted edge.',
-		risks: 'Costs an extra render pass per frame. The canvas is transparent, so the head refracts the scene, not the page behind it — it frosts rather than magnifies.',
+		risks:
+			'Costs an extra render pass per frame. The canvas is transparent, so the head refracts the scene, not the page behind it — it frosts rather than magnifies.',
 		build({ THREE, isHead }) {
 			return new THREE.MeshPhysicalMaterial({
 				color: pick(isHead, 0xf4ead9, 0xe9d4b6),
@@ -323,7 +328,8 @@ export const materialPresets: MaterialPreset[] = [
 		name: 'Cut crystal',
 		family: 'glass',
 		look: 'Optical glass: the page bends through the form, with prismatic fringing along every curve.',
-		risks: 'The heaviest option (transmission + dispersion). Same caveat as frosted glass: there is no page content behind the canvas for it to refract.',
+		risks:
+			'The heaviest option (transmission + dispersion). Same caveat as frosted glass: there is no page content behind the canvas for it to refract.',
 		build({ THREE, isHead }) {
 			return new THREE.MeshPhysicalMaterial({
 				color: pick(isHead, 0xffffff, 0xeaf4ff),
@@ -455,7 +461,10 @@ export const materialPresets: MaterialPreset[] = [
 			// Inverted-hull outline: a back-facing copy scaled up a touch.
 			const outline = new THREE.Mesh(
 				mesh.geometry,
-				new THREE.MeshBasicMaterial({ color: new THREE.Color(palette.vars.ink), side: THREE.BackSide })
+				new THREE.MeshBasicMaterial({
+					color: new THREE.Color(palette.vars.ink),
+					side: THREE.BackSide
+				})
 			);
 			outline.scale.setScalar(isHead ? 1.035 : 1.06);
 			outline.userData.presetExtra = true;

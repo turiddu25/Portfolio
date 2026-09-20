@@ -52,7 +52,8 @@
 			<span class="dot"></span>
 			Theme lab
 		</button>
-		<button class="close" on:click={() => labOpen.set(false)} aria-label="Close theme lab">×</button>
+		<button class="close" on:click={() => labOpen.set(false)} aria-label="Close theme lab">×</button
+		>
 	</header>
 
 	{#if !collapsed}
