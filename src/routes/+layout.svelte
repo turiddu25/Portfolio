@@ -5,7 +5,9 @@
 	import { onNavigate } from '$app/navigation';
 	import ChatPanel from '$lib/components/chat/ChatPanel.svelte';
 	import ChatFAB from '$lib/components/chat/ChatFAB.svelte';
+	import ThemeLab from '$lib/components/ThemeLab.svelte';
 	import { sceneReady } from '$lib/stores/sceneStore';
+	import { labOpen, labRequested } from '$lib/stores/themeStore';
 
 	let { children } = $props();
 
@@ -18,6 +20,28 @@
 				await navigation.complete;
 			});
 		});
+	});
+
+	// Shift+L opens the palette/material lab anywhere on the site.
+	function handleKeydown(event: KeyboardEvent) {
+		if (!event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return;
+		if (event.key !== 'L' && event.key !== 'l') return;
+
+		const target = event.target as HTMLElement | null;
+		const typing =
+			target?.tagName === 'INPUT' ||
+			target?.tagName === 'TEXTAREA' ||
+			target?.tagName === 'SELECT' ||
+			target?.isContentEditable;
+		if (typing) return;
+
+		event.preventDefault();
+		labOpen.update((open) => !open);
+	}
+
+	// ?lab=1 is read after mount so SSR and the first client render agree.
+	onMount(() => {
+		if (labRequested) labOpen.set(true);
 	});
 
 	// Prevent browser UI from hiding/showing on mobile for static experience
@@ -54,6 +78,8 @@
 	});
 </script>
 
+<svelte:window on:keydown={handleKeydown} />
+
 <svelte:head>
 	<link rel="icon" href={favicon} />
 </svelte:head>
@@ -67,6 +93,9 @@
 {@render children?.()}
 <ChatPanel />
 <ChatFAB />
+{#if $labOpen}
+	<ThemeLab />
+{/if}
 
 <style>
 	.global-preloader {

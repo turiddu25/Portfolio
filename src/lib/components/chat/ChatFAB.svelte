@@ -60,7 +60,7 @@
 		color: var(--black);
 		cursor: pointer;
 		position: relative;
-		box-shadow: 0 10px 30px rgba(22, 20, 17, 0.18);
+		box-shadow: 0 10px 30px var(--shadow-soft);
 	}
 
 	.chat-fab::after {

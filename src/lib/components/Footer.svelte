@@ -116,7 +116,7 @@
 	.social-link:hover {
 		color: var(--black);
 		transform: translateY(-4px);
-		box-shadow: 0 8px 16px rgba(22, 20, 17, 0.14);
+		box-shadow: 0 8px 16px var(--shadow-soft);
 	}
 
 	.social-link:hover::before {

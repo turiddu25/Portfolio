@@ -94,7 +94,7 @@
 		inset: 0;
 		z-index: 80;
 		border: 0;
-		background: rgba(22, 20, 17, 0.22);
+		background: var(--shadow-strong);
 		backdrop-filter: blur(4px);
 		cursor: pointer;
 	}

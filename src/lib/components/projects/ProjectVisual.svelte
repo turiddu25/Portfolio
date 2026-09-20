@@ -18,13 +18,13 @@
 	.project-visual {
 		width: 100%;
 		height: 100%;
-		background: #1a1815;
+		background: var(--tile);
 		color: var(--project-accent);
 		overflow: hidden;
 	}
 
 	.project-visual.muted {
-		color: rgba(255, 246, 232, 0.72);
+		color: var(--tile-ink);
 		transition: color 0.35s var(--ease);
 	}
 
@@ -40,11 +40,11 @@
 	}
 
 	.project-visual :global(svg) {
-		background: #1a1815;
+		background: var(--tile);
 	}
 
 	.project-visual :global(svg rect:not([fill="none"])) {
-		fill: #1a1815;
+		fill: var(--tile);
 	}
 
 	.project-visual :global(svg [stroke]:not([stroke="none"])) {

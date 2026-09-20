@@ -6,6 +6,7 @@
 	import { gsap } from 'gsap';
 	import { openChat } from '$lib/stores/chatStore';
 	import { sceneReady as sceneReadyStore } from '$lib/stores/sceneStore';
+	import { activeMaterial, activePalette } from '$lib/stores/themeStore';
 
 	let heroSection;
 	let canvas;
@@ -18,6 +19,18 @@
 	let headGroup;
 	let headFloatOffset = 0;
 	let isSceneReady = false;
+
+	// --- theme wiring -------------------------------------------------
+	// The palette drives the light rig and background motes; the material
+	// preset drives what the head and logos are *made of*. Both can change
+	// at runtime (see $lib/theme and the theme lab panel).
+	let lights = {};
+	let backgroundPoints;
+	let currentPalette;
+	let currentMaterial;
+	let managedMaterials = [];
+	let presetExtras = [];
+	let unsubscribers = [];
 
 	const LOGO_FLOAT_AMOUNT = 0.1;
 
@@ -85,35 +98,63 @@
 	}
 
 	let paused = false;
+	let rafId = 0;
 
 	function handleVisibilityChange() {
+		const wasPaused = paused;
 		paused = document.hidden;
-		if (!paused && isSceneReady) animate(); // resume RAF loop
+		// Only restart the loop if it had actually stopped, otherwise a quick
+		// tab-out/tab-in leaves two loops rendering every frame.
+		if (wasPaused && !paused && isSceneReady) animate();
 	}
 
-	onMount(async () => {
+	// NB: onMount only honours a returned cleanup when the callback is
+	// synchronous — an async callback returns a promise and the teardown is
+	// dropped. The setup is async, so it runs inside a synchronous callback.
+	onMount(() => {
+		let destroyed = false;
 		sceneReadyStore.set(false);
-		const threeModule = await import('three');
-		const [{ GLTFLoader }, { RGBELoader }, { DRACOLoader }] = await Promise.all([
-			import('three/addons/loaders/GLTFLoader.js'),
-			import('three/addons/loaders/RGBELoader.js'),
-			import('three/addons/loaders/DRACOLoader.js')
-		]);
 
-		THREE = threeModule;
-		initScene(GLTFLoader, RGBELoader, DRACOLoader);
-		window.addEventListener('resize', onResize);
-		window.addEventListener('scroll', handleScroll);
-		window.addEventListener('pointermove', handlePointerMove);
-		window.addEventListener('click', handleClick);
-		document.addEventListener('visibilitychange', handleVisibilityChange);
+		(async () => {
+			const threeModule = await import('three');
+			const [{ GLTFLoader }, { RGBELoader }, { DRACOLoader }] = await Promise.all([
+				import('three/addons/loaders/GLTFLoader.js'),
+				import('three/addons/loaders/RGBELoader.js'),
+				import('three/addons/loaders/DRACOLoader.js')
+			]);
+
+			if (destroyed) return;
+			THREE = threeModule;
+
+			// Subscribe before the scene exists: both handlers are guarded, and this
+			// way the first palette/material are in hand by the time models land.
+			unsubscribers.push(
+				activePalette.subscribe((palette) => applyScenePalette(palette)),
+				activeMaterial.subscribe((preset) => applyMaterialPreset(preset))
+			);
+
+			initScene(GLTFLoader, RGBELoader, DRACOLoader);
+			window.addEventListener('resize', onResize);
+			window.addEventListener('scroll', handleScroll);
+			window.addEventListener('pointermove', handlePointerMove);
+			window.addEventListener('click', handleClick);
+			document.addEventListener('visibilitychange', handleVisibilityChange);
+		})();
+
 		return () => {
+			destroyed = true;
+			paused = true;
+			cancelAnimationFrame(rafId);
 			window.removeEventListener('resize', onResize);
 			window.removeEventListener('scroll', handleScroll);
 			window.removeEventListener('pointermove', handlePointerMove);
 			window.removeEventListener('click', handleClick);
 			document.removeEventListener('visibilitychange', handleVisibilityChange);
 			clearTimeout(loadingTimeout);
+			unsubscribers.forEach((unsubscribe) => unsubscribe());
+			unsubscribers = [];
+			clearPresetExtras();
+			disposeManagedMaterials();
 			if (renderer) renderer.dispose();
 		};
 	});
@@ -178,34 +219,29 @@
 			(error) => console.error('Error loading HDR:', error)
 		);
 
-		const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-		scene.add(ambientLight);
-		const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
-		keyLight.position.set(5, 5, 5);
-		scene.add(keyLight);
-		const fillLight = new THREE.DirectionalLight(0xffffff, 0.6);
-		fillLight.position.set(-5, 0, -5);
-		scene.add(fillLight);
-		const rimLight = new THREE.DirectionalLight(0xffffff, 2.0);
-		rimLight.position.set(0, 5, -5);
-		scene.add(rimLight);
-		const backLight = new THREE.PointLight(0xffffff, 1.0);
-		backLight.position.set(0, 0, -3);
-		scene.add(backLight);
+		lights.ambient = new THREE.AmbientLight(0xffffff, 0.8);
+		scene.add(lights.ambient);
+		lights.key = new THREE.DirectionalLight(0xffffff, 2.5);
+		lights.key.position.set(5, 5, 5);
+		scene.add(lights.key);
+		lights.fill = new THREE.DirectionalLight(0xffffff, 0.6);
+		lights.fill.position.set(-5, 0, -5);
+		scene.add(lights.fill);
+		lights.rim = new THREE.DirectionalLight(0xffffff, 2.0);
+		lights.rim.position.set(0, 5, -5);
+		scene.add(lights.rim);
+		lights.back = new THREE.PointLight(0xffffff, 1.0);
+		lights.back.position.set(0, 0, -3);
+		scene.add(lights.back);
+
+		// A palette may already be selected before the scene existed.
+		applyScenePalette(currentPalette);
 
 		gltfLoader.load(
 			'/head33.glb',
 			(gltf) => {
 				head = gltf.scene;
-				head.traverse((child) => {
-					if (child.isMesh) {
-						child.material = new THREE.MeshStandardMaterial({
-							color: 0xb07a3f,
-							roughness: 0.24,
-							metalness: 1.0
-						});
-					}
-				});
+				dressObject(head, true);
 
 				headGroup = new THREE.Group();
 				const pos = getResponsivePosition();
@@ -295,15 +331,7 @@
 				data.file,
 				(gltf) => {
 					const logo = gltf.scene;
-					logo.traverse((child) => {
-						if (child.isMesh) {
-							child.material = new THREE.MeshStandardMaterial({
-								color: 0xc08a4b,
-								roughness: 0.22,
-								metalness: 0.95
-							});
-						}
-					});
+					dressObject(logo, false);
 
 					const scaleMultiplier = getLogoScaleMultiplier();
 					const finalScale = data.scale * scaleMultiplier;
@@ -506,6 +534,142 @@
 		});
 	}
 
+	/* ------------------------------------------------------------------
+	   Palette + material application
+	   ------------------------------------------------------------------ */
+
+	function toneMappingFor(name) {
+		switch (name) {
+			case 'aces':
+				return THREE.ACESFilmicToneMapping;
+			case 'neutral':
+				return THREE.NeutralToneMapping;
+			case 'agx':
+				return THREE.AgXToneMapping;
+			default:
+				return THREE.NoToneMapping;
+		}
+	}
+
+	/** Recolour the light rig + background motes to match the active palette. */
+	function applyScenePalette(palette) {
+		if (palette) currentPalette = palette;
+		if (!THREE || !currentPalette) return;
+
+		const rig = currentPalette.scene;
+
+		if (lights.ambient) {
+			lights.ambient.color.set(rig.ambient);
+			lights.ambient.intensity = rig.ambientIntensity;
+		}
+		if (lights.key) {
+			lights.key.color.set(rig.key);
+			lights.key.intensity = rig.keyIntensity;
+		}
+		if (lights.fill) {
+			lights.fill.color.set(rig.fill);
+			lights.fill.intensity = rig.fillIntensity;
+		}
+		if (lights.rim) {
+			lights.rim.color.set(rig.rim);
+			lights.rim.intensity = rig.rimIntensity;
+		}
+		if (lights.back) {
+			lights.back.color.set(rig.back);
+			lights.back.intensity = rig.backIntensity;
+		}
+		if (backgroundPoints) {
+			backgroundPoints.material.color.set(rig.points);
+			backgroundPoints.material.opacity = rig.pointsOpacity;
+		}
+		if (renderer) {
+			renderer.toneMapping = toneMappingFor(rig.toneMapping);
+			renderer.toneMappingExposure = rig.exposure ?? 1;
+		}
+
+		// Several presets tint themselves from the palette, so rebuild them.
+		if (headLoaded) applyMaterialPreset(currentMaterial);
+	}
+
+	// Textures come from the memoised cache in $lib/theme/textures and are shared
+	// between presets, so only the material itself is ours to free.
+	function disposeManagedMaterials() {
+		managedMaterials.forEach((material) => material.dispose());
+		managedMaterials = [];
+	}
+
+	function clearPresetExtras() {
+		presetExtras.forEach((object) => {
+			object.parent?.remove(object);
+			// NB: extras (outline hulls, inner shells) share the model's geometry —
+			// only their own material is ours to dispose.
+			object.material?.dispose?.();
+		});
+		presetExtras = [];
+	}
+
+	function presetContext(isHead) {
+		return {
+			THREE,
+			palette: currentPalette,
+			isHead,
+			isMobile: window.innerWidth < 768,
+			addExtra: (object) => presetExtras.push(object)
+		};
+	}
+
+	/**
+	 * java.glb ships POSITION + NORMAL only. Without a uv attribute every texture
+	 * slot samples a single texel, and anisotropy's screen-space tangent frame
+	 * degenerates. Project a cylindrical UV set from POSITION (not from normals,
+	 * which are per-face on flat-shaded meshes and would give constant UVs).
+	 */
+	function ensureUV(geometry) {
+		if (geometry.attributes.uv || !geometry.attributes.position) return;
+
+		const position = geometry.attributes.position;
+		if (!geometry.boundingBox) geometry.computeBoundingBox();
+		const box = geometry.boundingBox;
+		const height = Math.max(box.max.y - box.min.y, 1e-6);
+		const uv = new Float32Array(position.count * 2);
+
+		for (let i = 0; i < position.count; i++) {
+			const x = position.getX(i);
+			const y = position.getY(i);
+			const z = position.getZ(i);
+			uv[i * 2] = Math.atan2(z, x) / (Math.PI * 2) + 0.5;
+			uv[i * 2 + 1] = (y - box.min.y) / height;
+		}
+
+		geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+	}
+
+	/** Build the active preset's material for every mesh inside `object`. */
+	function dressObject(object, isHead) {
+		if (!object || !currentMaterial || !THREE) return;
+		object.traverse((child) => {
+			if (!child.isMesh || child.userData.presetExtra) return;
+			ensureUV(child.geometry);
+			const context = { ...presetContext(isHead), mesh: child, scene };
+			const material = currentMaterial.build(context);
+			managedMaterials.push(material);
+			child.material = material;
+			currentMaterial.setup?.({ ...context, material });
+		});
+	}
+
+	/** Swap every managed mesh over to a new material preset. */
+	function applyMaterialPreset(preset) {
+		if (preset) currentMaterial = preset;
+		if (!THREE || !currentMaterial) return;
+
+		clearPresetExtras();
+		disposeManagedMaterials();
+
+		if (head) dressObject(head, true);
+		logos.forEach((logo) => dressObject(logo.mesh, false));
+	}
+
 	function addBackgroundGrid() {
 		const geometry = new THREE.BufferGeometry();
 		const vertices = [];
@@ -514,8 +678,9 @@
 		}
 		geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 		const material = new THREE.PointsMaterial({ color: 0x161411, size: 0.05, transparent: true, opacity: 0.05 });
-		const points = new THREE.Points(geometry, material);
-		scene.add(points);
+		backgroundPoints = new THREE.Points(geometry, material);
+		scene.add(backgroundPoints);
+		applyScenePalette(currentPalette);
 	}
 
 	function onResize() {
@@ -592,8 +757,8 @@
 	}
 
 	function animate() {
-		if (paused) return; // stop RAF loop when tab is hidden
-		requestAnimationFrame(animate);
+		if (paused) return; // stop RAF loop when tab is hidden or on destroy
+		rafId = requestAnimationFrame(animate);
 		if (!isSceneReady) return; // <— prevents early renders
 		const time = Date.now() * 0.001;
 		const baseScale = getResponsiveScale();
@@ -781,10 +946,10 @@
 
 	@keyframes ripple {
 		0% {
-			box-shadow: 0 0 0 0 rgba(22, 20, 17, 0.24);
+			box-shadow: 0 0 0 0 var(--shadow-strong);
 		}
 		100% {
-			box-shadow: 0 0 0 20px rgba(22, 20, 17, 0);
+			box-shadow: 0 0 0 20px transparent;
 		}
 	}
 

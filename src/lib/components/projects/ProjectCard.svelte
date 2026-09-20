@@ -102,8 +102,8 @@
 		position: relative;
 		aspect-ratio: 4 / 3;
 		overflow: hidden;
-		border: 1px solid rgba(255, 246, 232, 0.1);
-		background: #1a1815;
+		border: 1px solid color-mix(in srgb, var(--tile-ink) 14%, transparent);
+		background: var(--tile);
 		transition:
 			border-color 0.35s var(--ease),
 			transform 0.35s var(--ease),
@@ -117,7 +117,7 @@
 		padding: 0.45rem 0.7rem;
 		border: 1px solid currentColor;
 		border-radius: 999px;
-		background: rgba(26, 24, 21, 0.78);
+		background: color-mix(in srgb, var(--tile) 78%, transparent);
 		color: var(--project-accent);
 		font-size: 0.75rem;
 		line-height: 1;
@@ -165,7 +165,7 @@
 	.project-card.open .visual-tile {
 		border-color: var(--project-accent);
 		transform: translateY(-4px);
-		box-shadow: 0 18px 42px rgba(74, 52, 38, 0.2);
+		box-shadow: 0 18px 42px var(--shadow-strong);
 	}
 
 	.project-card:hover .view-label,
