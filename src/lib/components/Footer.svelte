@@ -71,12 +71,13 @@
 
 <style>
 	footer {
-		/* The band is sized once here; the padding below reserves room for it. */
-		--marquee-size: clamp(3.5rem, 13vw, 11rem);
-		--marquee-visible: calc(var(--marquee-size) * 0.4);
+		--marquee-size: clamp(3rem, 9vw, 8rem);
 
 		position: relative;
-		padding: 2rem 2rem calc(var(--marquee-visible) * 0.55 + 0.5rem);
+		/* Vertical padding never drops below half the band, so the name always
+		   has room to sit whole behind the icons instead of being clipped. */
+		padding-block: max(2.5rem, calc(var(--marquee-size) * 0.5));
+		padding-inline: 2rem;
 		background: transparent;
 		overflow: hidden;
 	}
@@ -96,16 +97,16 @@
 	}
 
 	/*
-	 * The name runs along the bottom edge, cut in half by it, and slides past
-	 * forever. It sits behind the icons and the copyright.
+	 * The name slides past forever, whole, centred on the footer's content —
+	 * the icons and the copyright sit on top of it.
 	 */
 	.name-marquee {
 		position: absolute;
 		left: 0;
 		right: 0;
-		bottom: 0;
+		top: 50%;
+		transform: translateY(-50%);
 		z-index: 0;
-		height: var(--marquee-visible);
 		font-size: var(--marquee-size);
 		overflow: hidden;
 		pointer-events: none;
@@ -128,7 +129,7 @@
 		padding-right: 0.3em;
 		color: transparent;
 		-webkit-text-stroke: 1px var(--accent);
-		opacity: 0.45;
+		opacity: 0.38;
 	}
 
 	@keyframes marquee-slide {
@@ -195,11 +196,9 @@
 
 	@media (max-width: 768px) {
 		footer {
-			/* A proportionally taller band, and full clearance for the copyright —
-			   at phone sizes an overlap leaves it sitting inside the letterforms. */
-			--marquee-size: clamp(2.75rem, 17vw, 5rem);
+			--marquee-size: clamp(2.25rem, 13vw, 4rem);
 
-			padding: 1.5rem 1rem calc(var(--marquee-visible) + 0.5rem);
+			padding-inline: 1rem;
 		}
 
 		.footer-inner {

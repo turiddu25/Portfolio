@@ -8,8 +8,12 @@
 	import ThemeLab from '$lib/components/ThemeLab.svelte';
 	import { sceneReady } from '$lib/stores/sceneStore';
 	import { labOpen, labRequested } from '$lib/stores/themeStore';
+	import { scrollY } from '$lib/stores/scrollStore';
+	import Lenis from 'lenis';
 
 	let { children } = $props();
+
+	let shell: HTMLDivElement;
 
 	onNavigate((navigation) => {
 		if (!document.startViewTransition) return;
@@ -44,36 +48,49 @@
 		if (labRequested) labOpen.set(true);
 	});
 
-	// Prevent browser UI from hiding/showing on mobile for static experience
+	// Lenis drives `.scroll-shell`, not the window — the document never scrolls.
 	onMount(() => {
-		// This approach prevents the browser UI from hiding by keeping the page from
-		// scrolling too fast and triggering the UI hide/show behavior
-		let isScrollTimeout: ReturnType<typeof setTimeout> | undefined;
-		
-		const handleScroll = () => {
-			// Clear any existing timeout
-			if (isScrollTimeout) {
-				clearTimeout(isScrollTimeout);
-			}
-			
-			// Set a small timeout to prevent rapid scroll events that could trigger UI hiding
-			isScrollTimeout = setTimeout(() => {
-				// This helps maintain consistent viewport height
-				document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-			}, 100);
-		};
+		const lenis = new Lenis({
+			wrapper: shell,
+			content: shell.firstElementChild as HTMLElement,
+			duration: 1.8,
+			easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+			orientation: 'vertical',
+			smoothWheel: true,
+			wheelMultiplier: 1,
+			touchMultiplier: 2
+		});
 
-		// Set initial vh unit and add scroll listener
-		handleScroll();
-		window.addEventListener('scroll', handleScroll, { passive: true });
-		window.addEventListener('resize', handleScroll);
+		let rafId = 0;
+		let paused = false;
+
+		function raf(time: number) {
+			if (paused) return;
+			lenis.raf(time);
+			rafId = requestAnimationFrame(raf);
+		}
+
+		rafId = requestAnimationFrame(raf);
+
+		lenis.on('scroll', ({ scroll }: { scroll: number }) => scrollY.set(scroll));
+		// Safety net: if smooth scrolling is ever bypassed, the shell still reports.
+		const onNativeScroll = () => scrollY.set(shell.scrollTop);
+		shell.addEventListener('scroll', onNativeScroll, { passive: true });
+
+		function handleVisibilityChange() {
+			paused = document.hidden;
+			if (!paused) rafId = requestAnimationFrame(raf);
+		}
+
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		window.lenis = lenis;
 
 		return () => {
-			window.removeEventListener('scroll', handleScroll);
-			window.removeEventListener('resize', handleScroll);
-			if (isScrollTimeout) {
-				clearTimeout(isScrollTimeout);
-			}
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			shell.removeEventListener('scroll', onNativeScroll);
+			cancelAnimationFrame(rafId);
+			lenis.destroy();
+			delete window.lenis;
 		};
 	});
 </script>
@@ -90,7 +107,11 @@
 	</div>
 {/if}
 
-{@render children?.()}
+<div class="scroll-shell" bind:this={shell}>
+	<div>
+		{@render children?.()}
+	</div>
+</div>
 <ChatPanel />
 <ChatFAB />
 {#if $labOpen}

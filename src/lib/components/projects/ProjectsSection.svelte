@@ -5,6 +5,7 @@
 	import ProjectList from './ProjectList.svelte';
 
 	export let projects = [];
+	export let cmsReachable = true;
 
 	let section;
 
@@ -40,8 +41,10 @@
 
 		{#if projects.length}
 			<ProjectList {projects} />
-		{:else}
+		{:else if cmsReachable}
 			<p class="empty">No projects found.</p>
+		{:else}
+			<p class="empty">Couldn't reach the CMS — projects will be back shortly.</p>
 		{/if}
 	</div>
 </section>

@@ -1,20 +1,19 @@
 <script>
 	import { onMount } from 'svelte';
 	import { chatStore, openChat } from '$lib/stores/chatStore';
+	import { scrollY } from '$lib/stores/scrollStore';
 
-	let show = false;
+	// The document does not scroll — `.scroll-shell` does, and reports here.
+	let threshold = 600;
 
 	$: state = $chatStore;
+	$: show = $scrollY > threshold;
 
 	onMount(() => {
-		function handleScroll() {
-			show = window.scrollY > window.innerHeight * 0.7;
-		}
-
-		handleScroll();
-		window.addEventListener('scroll', handleScroll, { passive: true });
-
-		return () => window.removeEventListener('scroll', handleScroll);
+		const measure = () => (threshold = window.innerHeight * 0.7);
+		measure();
+		window.addEventListener('resize', measure);
+		return () => window.removeEventListener('resize', measure);
 	});
 </script>
 

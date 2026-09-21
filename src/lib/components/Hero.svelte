@@ -99,6 +99,7 @@
 
 	let paused = false;
 	let rafId = 0;
+	let rendered = { width: 0, height: 0 };
 
 	// The "talk to me" label tracks the head's projected screen position, so it
 	// stays pinned under the chin as the head floats and at any viewport size.
@@ -215,11 +216,14 @@
 		pointer = new THREE.Vector2();
 
 		scene = new THREE.Scene();
-		camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+		const size = canvasSize();
+		camera = new THREE.PerspectiveCamera(50, size.width / size.height, 0.1, 1000);
 		camera.position.z = 5;
 		renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-		renderer.setSize(window.innerWidth, window.innerHeight);
-		renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.innerWidth < 768 ? 1.5 : 2));
+		// `false`: CSS already sizes the canvas, we only set the drawing buffer.
+		renderer.setSize(size.width, size.height, false);
+		renderer.setPixelRatio(Math.min(window.devicePixelRatio, size.width < 768 ? 1.5 : 2));
+		rendered = size;
 
 		rgbeLoader.load(
 			'/studio_small_03_1k.hdr',
@@ -739,11 +743,25 @@
 		applyScenePalette(currentPalette);
 	}
 
+	/** The canvas fills the hero, so its own box is the truth — not the window. */
+	function canvasSize() {
+		return {
+			width: canvas?.clientWidth || window.innerWidth,
+			height: canvas?.clientHeight || window.innerHeight
+		};
+	}
+
 	function onResize() {
-		camera.aspect = window.innerWidth / window.innerHeight;
+		const size = canvasSize();
+		// Ignore no-op resizes: mobile browsers fire these while chrome animates,
+		// and re-sizing on each one makes the models visibly breathe.
+		if (size.width === rendered.width && size.height === rendered.height) return;
+		rendered = size;
+
+		camera.aspect = size.width / size.height;
 		camera.updateProjectionMatrix();
-		renderer.setSize(window.innerWidth, window.innerHeight);
-		renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.innerWidth < 768 ? 1.5 : 2));
+		renderer.setSize(size.width, size.height, false);
+		renderer.setPixelRatio(Math.min(window.devicePixelRatio, size.width < 768 ? 1.5 : 2));
 		if (head && headLoaded && headGroup) {
 			const newScale = getResponsiveScale();
 			const pos = getResponsivePosition();
@@ -943,6 +961,7 @@
 		position: relative;
 		width: 100%;
 		height: 100vh;
+		height: 100svh;
 		overflow: hidden;
 	}
 

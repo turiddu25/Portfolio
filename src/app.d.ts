@@ -1,14 +1,11 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
+import type Lenis from 'lenis';
+
 declare global {
 	interface Window {
-		lenis?: {
-			raf: (time: number) => void;
-			scrollTo: (target: Element | string, options?: Record<string, unknown>) => void;
-			destroy: () => void;
-			stop?: () => void;
-			start?: () => void;
-		};
+		/** Set by the root layout; drives `.scroll-shell`, not the document. */
+		lenis?: Lenis;
 	}
 
 	namespace App {
