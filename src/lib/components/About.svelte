@@ -1,7 +1,8 @@
 <section class="about-section" id="about">
 	<div class="about-inner">
-		<p>
-			CS graduate of the University of Glasgow. Senior Developer &amp; AI Engineer at
+		<p class="line study">CS graduate of the University of Glasgow.</p>
+		<p class="line role">
+			Senior Developer &amp; AI Engineer at
 			<a
 				class="company"
 				href="https://hamiltonrossgroup.co.uk"
@@ -28,12 +29,28 @@
 		width: min(1200px, 100%);
 		margin: 0 auto;
 		font-family: var(--font-heading);
-		font-size: clamp(1.75rem, 4vw, 3rem);
-		line-height: 1.3;
+		line-height: 1.25;
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	.line {
+		margin: 0;
+		text-wrap: balance;
+	}
+
+	/* The degree is context; the job is the headline. */
+	.study {
+		font-size: clamp(1.1rem, 1.9vw, 1.5rem);
+		font-weight: 500;
+		letter-spacing: 0.01em;
 		color: var(--grey-soft);
 	}
 
-	.about-inner :global(strong) {
+	.role {
+		font-size: clamp(1.75rem, 4vw, 3rem);
+		font-weight: 700;
 		color: var(--white);
 	}
 
@@ -95,6 +112,10 @@
 	@media (max-width: 767px) {
 		.about-section {
 			padding: 6rem 1rem;
+		}
+
+		.about-inner {
+			gap: 0.45rem;
 		}
 
 		.company {

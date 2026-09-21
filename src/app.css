@@ -138,6 +138,12 @@
   --texture-opacity: 0.18;
   --texture-blend: multiply;
 
+  /* Large soft wash behind everything — see $lib/theme/backdrops.ts */
+  --wash-image: none;
+  --wash-size: auto;
+  --wash-opacity: 0;
+  --wash-blend: normal;
+
   --font-heading: 'Technor', sans-serif;
   --font-body: 'Supreme', sans-serif;
 
@@ -209,6 +215,40 @@ body::before {
   mix-blend-mode: var(--texture-blend);
   background-image: var(--texture-image);
   background-size: var(--texture-size);
+}
+
+/* The wash sits behind the content but in front of the page gradient. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: var(--wash-opacity);
+  mix-blend-mode: var(--wash-blend);
+  background-image: var(--wash-image);
+  background-size: var(--wash-size);
+  background-position: 0% 0%, 100% 0%, 50% 100%;
+  background-repeat: no-repeat;
+}
+
+html[data-backdrop-motion='drift'] body::after {
+  animation: wash-drift 64s var(--ease) infinite alternate;
+}
+
+@keyframes wash-drift {
+  from {
+    background-position: 0% 0%, 100% 0%, 50% 100%;
+  }
+  to {
+    background-position: 34% 26%, 62% 34%, 38% 66%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-backdrop-motion='drift'] body::after {
+    animation: none;
+  }
 }
 
 /* Global transitions */

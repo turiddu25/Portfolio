@@ -4,13 +4,17 @@
 	import { page } from '$app/stores';
 	import { palettes } from '$lib/theme/palettes';
 	import { materialPresets } from '$lib/theme/materials';
+	import { backdrops } from '$lib/theme/backdrops';
 	import {
 		paletteId,
 		materialId,
 		activePalette,
 		activeMaterial,
+		backdropId,
+		activeBackdrop,
 		setPalette,
 		setMaterial,
+		setBackdrop,
 		labOpen
 	} from '$lib/stores/themeStore';
 
@@ -24,6 +28,7 @@
 		const url = new URL($page.url);
 		url.searchParams.set('palette', $paletteId);
 		url.searchParams.set('material', $materialId);
+		url.searchParams.set('backdrop', $backdropId);
 		url.searchParams.set('lab', '1');
 
 		// Keep SvelteKit's history state intact — a raw history.replaceState
@@ -106,6 +111,25 @@
 				{/each}
 				{#if $activeMaterial?.look}
 					<p class="note">{$activeMaterial.look}</p>
+				{/if}
+			</section>
+
+			<section>
+				<h4>Backdrop <em>{$activeBackdrop?.name}</em></h4>
+				<div class="grid">
+					{#each backdrops as backdrop}
+						<button
+							class="pill"
+							class:active={backdrop.id === $backdropId}
+							title={backdrop.note}
+							on:click={() => setBackdrop(backdrop.id)}
+						>
+							{backdrop.name}
+						</button>
+					{/each}
+				</div>
+				{#if $activeBackdrop?.note}
+					<p class="note">{$activeBackdrop.note}</p>
 				{/if}
 			</section>
 

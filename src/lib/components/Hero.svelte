@@ -2,7 +2,7 @@
 
 <script>
 	// @ts-nocheck
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { gsap } from 'gsap';
 	import { openChat } from '$lib/stores/chatStore';
 	import { sceneReady as sceneReadyStore } from '$lib/stores/sceneStore';
@@ -38,20 +38,20 @@
 	// Customize these values for desktop and mobile!
 	const HEAD_POSITIONS = {
 		desktop: { x: -1, y: 0 },
-		mobile: { x: 0, y: 0.4 }  // Mobile head position (customize this!)
+		mobile: { x: 0, y: 0.4 } // Mobile head position (customize this!)
 	};
 	// ===================================
 
 	// ===== HEAD & LOGO SCALE CONFIG =====
 	// Customize scale (size) for desktop and mobile!
 	const HEAD_SCALE = {
-		desktop: 3.6 * 0.7,  // Desktop head size
-		mobile: 2.2 * 0.7    // Mobile head size (customize this!)
+		desktop: 3.6 * 0.7, // Desktop head size
+		mobile: 2.2 * 0.7 // Mobile head size (customize this!)
 	};
 
 	const LOGO_SCALE_MULTIPLIER = {
-		desktop: 1.0,  // Desktop logo size (1.0 = normal)
-		mobile: 0.7    // Mobile logo size multiplier (customize this!)
+		desktop: 1.0, // Desktop logo size (1.0 = normal)
+		mobile: 0.7 // Mobile logo size multiplier (customize this!)
 	};
 	// ====================================
 
@@ -59,12 +59,12 @@
 	// Customize animation distances and timing!
 	const ANIMATION_CONFIG = {
 		head: {
-			startX: 0,          // X offset from final position (0 = no offset, + = right, - = left)
-			startY: 4,          // Y offset from final position (0 = no offset, + = up, - = down)
-			startZ: -4,         // How far back head starts (negative = further away)
-			startScale: 0.5,    // Starting scale multiplier (0.5 = half size)
-			duration: 1.8,      // Animation duration in seconds
-			delay: 0.6          // Delay before animation starts
+			startX: 0, // X offset from final position (0 = no offset, + = right, - = left)
+			startY: 4, // Y offset from final position (0 = no offset, + = up, - = down)
+			startZ: -4, // How far back head starts (negative = further away)
+			startScale: 0.5, // Starting scale multiplier (0.5 = half size)
+			duration: 1.8, // Animation duration in seconds
+			delay: 0.6 // Delay before animation starts
 		}
 	};
 
@@ -99,6 +99,18 @@
 
 	let paused = false;
 	let rafId = 0;
+
+	// The "talk to me" label tracks the head's projected screen position, so it
+	// stays pinned under the chin as the head floats and at any viewport size.
+	let headHint;
+	let hintProjection;
+	let hintVisible = false;
+	const HINT_SEEN_KEY = 'colin-chat-opened';
+
+	// Pointer-follow for the head: a target set on move, eased every frame.
+	const pointerTarget = { x: 0, y: 0 };
+	const pointerEased = { x: 0, y: 0 };
+	const LOOK_AMOUNT = { x: 0.26, y: 0.14 };
 
 	function handleVisibilityChange() {
 		const wasPaused = paused;
@@ -271,16 +283,20 @@
 	function loadLogos(loader) {
 		// Desktop positions + Individual animation settings
 		const logoFiles = [
-			{ 
-				file: '/c.glb', 
-				scale: 0.01, 
-				x: 1.3, y: 1.3, z: 0, 
+			{
+				file: '/c.glb',
+				scale: 0.01,
+				x: 1.3,
+				y: 1.3,
+				z: 0,
 				rotationY: -Math.PI / 6,
 				// Mobile positions
-				mobileX: 0.5, mobileY: 1.1, mobileZ: 0,
+				mobileX: 0.5,
+				mobileY: 1.1,
+				mobileZ: 0,
 				// Animation settings (optional - uses defaults if not specified)
 				animation: {
-					startX: 3,      // Come from right
+					startX: 3, // Come from right
 					startY: 10,
 					startZ: -15,
 					startScale: 0.3,
@@ -288,11 +304,15 @@
 					delay: 0.8
 				}
 			},
-			{ 
-				file: '/java.glb', 
-				scale: 0.2, 
-				x: -1.1, y: 1.1, z: 0.8,
-				mobileX: -0.6, mobileY: 0.9, mobileZ: 0.5,
+			{
+				file: '/java.glb',
+				scale: 0.2,
+				x: -1.1,
+				y: 1.1,
+				z: 0.8,
+				mobileX: -0.6,
+				mobileY: 0.9,
+				mobileZ: 0.5,
 				animation: {
 					startX: -10,
 					startY: 10,
@@ -300,11 +320,15 @@
 					delay: 1.1
 				}
 			},
-			{ 
-				file: '/python.glb', 
-				scale: 0.01, 
-				x: -1.4, y: 0, z: 0,
-				mobileX: -0.8, mobileY: 0, mobileZ: 0,
+			{
+				file: '/python.glb',
+				scale: 0.01,
+				x: -1.4,
+				y: 0,
+				z: 0,
+				mobileX: -0.8,
+				mobileY: 0,
+				mobileZ: 0,
 				animation: {
 					startX: -10,
 					startY: -10,
@@ -315,8 +339,12 @@
 			{
 				file: '/react_logo.glb',
 				scale: 0.15,
-				x: 1.1, y: -1.0, z: 0.8,
-				mobileX: 0.7, mobileY: -0.3, mobileZ: 0.5,
+				x: 1.1,
+				y: -1.0,
+				z: 0.8,
+				mobileX: 0.7,
+				mobileY: -0.3,
+				mobileZ: 0.5,
 				animation: {
 					startX: 3,
 					startY: -10,
@@ -336,13 +364,13 @@
 					const scaleMultiplier = getLogoScaleMultiplier();
 					const finalScale = data.scale * scaleMultiplier;
 					logo.scale.set(finalScale, finalScale, finalScale);
-					
+
 					// Use mobile or desktop positions based on screen size
 					const isMobile = window.innerWidth < 768;
 					const posX = isMobile ? data.mobileX : data.x;
 					const posY = isMobile ? data.mobileY : data.y;
 					const posZ = isMobile ? data.mobileZ : data.z;
-					
+
 					logo.position.set(posX, posY, posZ);
 					if (data.rotationY !== undefined) logo.rotation.y = data.rotationY;
 
@@ -351,12 +379,12 @@
 					const headPos = getResponsivePosition();
 					const worldPosX = posX + headPos.x;
 					const worldPosY = posY + headPos.y;
-					
+
 					logo.position.set(worldPosX, worldPosY, posZ);
-					
+
 					// Merge logo animation settings with defaults
 					const animConfig = { ...DEFAULT_LOGO_ANIMATION, ...(data.animation || {}) };
-					
+
 					logos.push({
 						mesh: logo,
 						data: data, // Store original data for resize
@@ -420,6 +448,29 @@
 			);
 		}
 
+		// The head is clickable but nothing says so — reveal the label last, and
+		// only for someone who has not opened the chat before.
+		let alreadyOpened = false;
+		try {
+			alreadyOpened = localStorage.getItem(HINT_SEEN_KEY) === '1';
+		} catch {
+			alreadyOpened = false;
+		}
+
+		if (!alreadyOpened) {
+			hintVisible = true;
+			// The element is behind an {#if}; it exists only after the next tick.
+			tick().then(() => {
+				if (!headHint) return;
+				positionHint();
+				gsap.fromTo(
+					headHint,
+					{ opacity: 0, y: 8 },
+					{ opacity: 1, y: 0, duration: 1, delay: 2.2, ease: 'power2.out' }
+				);
+			});
+		}
+
 		// Animate scroll indicator
 		const scrollIndicator = document.querySelector('.scroll-indicator');
 		if (scrollIndicator) {
@@ -434,38 +485,40 @@
 		if (head && headGroup) {
 			const finalPos = getResponsivePosition();
 			const finalScale = getResponsiveScale();
-			
+
 			// Animate head position from offset start position
-			gsap.fromTo(headGroup.position, 
-				{ 
-					x: finalPos.x + ANIMATION_CONFIG.head.startX, 
-					y: finalPos.y + ANIMATION_CONFIG.head.startY, 
-					z: ANIMATION_CONFIG.head.startZ 
+			gsap.fromTo(
+				headGroup.position,
+				{
+					x: finalPos.x + ANIMATION_CONFIG.head.startX,
+					y: finalPos.y + ANIMATION_CONFIG.head.startY,
+					z: ANIMATION_CONFIG.head.startZ
 				},
-				{ 
-					x: finalPos.x, 
-					y: finalPos.y, 
-					z: 0, 
-					duration: ANIMATION_CONFIG.head.duration, 
-					delay: ANIMATION_CONFIG.head.delay, 
-					ease: 'power2.out' 
+				{
+					x: finalPos.x,
+					y: finalPos.y,
+					z: 0,
+					duration: ANIMATION_CONFIG.head.duration,
+					delay: ANIMATION_CONFIG.head.delay,
+					ease: 'power2.out'
 				}
 			);
-			
+
 			// Animate head scale from small to final size
-			gsap.fromTo(head.scale, 
-				{ 
-					x: finalScale * ANIMATION_CONFIG.head.startScale, 
-					y: finalScale * ANIMATION_CONFIG.head.startScale, 
-					z: finalScale * ANIMATION_CONFIG.head.startScale 
+			gsap.fromTo(
+				head.scale,
+				{
+					x: finalScale * ANIMATION_CONFIG.head.startScale,
+					y: finalScale * ANIMATION_CONFIG.head.startScale,
+					z: finalScale * ANIMATION_CONFIG.head.startScale
 				},
-				{ 
-					x: finalScale, 
-					y: finalScale, 
-					z: finalScale, 
-					duration: ANIMATION_CONFIG.head.duration, 
-					delay: ANIMATION_CONFIG.head.delay, 
-					ease: 'power2.out' 
+				{
+					x: finalScale,
+					y: finalScale,
+					z: finalScale,
+					duration: ANIMATION_CONFIG.head.duration,
+					delay: ANIMATION_CONFIG.head.delay,
+					ease: 'power2.out'
 				}
 			);
 		}
@@ -475,12 +528,12 @@
 			const finalScale = logoObj.baseScale * getLogoScaleMultiplier();
 			const anim = logoObj.animConfig; // Use per-logo animation config
 			const { originalRotation, introSpin } = logoObj;
-			
+
 			// Calculate start positions with offsets
 			const startX = logoObj.originalPos.x + anim.startX;
 			const startY = logoObj.originalPos.y + anim.startY;
 			const startZ = logoObj.originalPos.z + anim.startZ;
-			
+
 			// Set initial position (before animation starts)
 			logoObj.mesh.position.set(startX, startY, startZ);
 			logoObj.mesh.rotation.set(
@@ -488,22 +541,20 @@
 				originalRotation.y + introSpin.y,
 				originalRotation.z + introSpin.z
 			);
-			
+
 			// Animate logo position from offset start position
-			gsap.to(logoObj.mesh.position,
-				{ 
-					x: logoObj.originalPos.x, 
-					y: logoObj.originalPos.y, 
-					z: logoObj.originalPos.z,
-					duration: anim.duration,
-					delay: anim.delay,
-					ease: 'power2.out',
-					onComplete: () => {
-						logoObj.isFloating = true;
-						logoObj.floatStartTime = Date.now() * 0.001;
-					}
+			gsap.to(logoObj.mesh.position, {
+				x: logoObj.originalPos.x,
+				y: logoObj.originalPos.y,
+				z: logoObj.originalPos.z,
+				duration: anim.duration,
+				delay: anim.delay,
+				ease: 'power2.out',
+				onComplete: () => {
+					logoObj.isFloating = true;
+					logoObj.floatStartTime = Date.now() * 0.001;
 				}
-			);
+			});
 
 			gsap.to(logoObj.mesh.rotation, {
 				x: originalRotation.x,
@@ -513,24 +564,24 @@
 				delay: anim.delay,
 				ease: 'power3.out'
 			});
-			
+
 			// Animate logo scale from small to final size
-			gsap.fromTo(logoObj.mesh.scale,
-				{ 
+			gsap.fromTo(
+				logoObj.mesh.scale,
+				{
 					x: finalScale * anim.startScale,
 					y: finalScale * anim.startScale,
 					z: finalScale * anim.startScale
 				},
-				{ 
-					x: finalScale, 
-					y: finalScale, 
+				{
+					x: finalScale,
+					y: finalScale,
 					z: finalScale,
 					duration: anim.duration,
 					delay: anim.delay,
 					ease: 'power2.out'
 				}
 			);
-			
 		});
 	}
 
@@ -677,7 +728,12 @@
 			vertices.push(Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 2 - 5);
 		}
 		geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-		const material = new THREE.PointsMaterial({ color: 0x161411, size: 0.05, transparent: true, opacity: 0.05 });
+		const material = new THREE.PointsMaterial({
+			color: 0x161411,
+			size: 0.05,
+			transparent: true,
+			opacity: 0.05
+		});
 		backgroundPoints = new THREE.Points(geometry, material);
 		scene.add(backgroundPoints);
 		applyScenePalette(currentPalette);
@@ -695,24 +751,24 @@
 			headGroup.position.x = pos.x;
 			headGroup.position.y = pos.y;
 		}
-		
+
 		// Update logo positions and scales for responsive layout
 		const isMobile = window.innerWidth < 768;
 		const headPos = getResponsivePosition();
-		
+
 		logos.forEach((logoObj) => {
 			if (logoObj.data) {
 				// Update position (convert relative to world position)
 				const relPosX = isMobile ? logoObj.data.mobileX : logoObj.data.x;
 				const relPosY = isMobile ? logoObj.data.mobileY : logoObj.data.y;
 				const posZ = isMobile ? logoObj.data.mobileZ : logoObj.data.z;
-				
+
 				// Convert to world position by adding head offset
 				const worldPosX = relPosX + headPos.x;
 				const worldPosY = relPosY + headPos.y;
-				
+
 				logoObj.originalPos = { x: worldPosX, y: worldPosY, z: posZ };
-				
+
 				// Update scale
 				const scaleMultiplier = getLogoScaleMultiplier();
 				const finalScale = logoObj.baseScale * scaleMultiplier;
@@ -743,6 +799,9 @@
 	}
 
 	function handlePointerMove(event) {
+		pointerTarget.x = (event.clientX / window.innerWidth) * 2 - 1;
+		pointerTarget.y = (event.clientY / window.innerHeight) * 2 - 1;
+
 		const hovering = updateHeadHover(event);
 		if (hovering === headHovered) return;
 
@@ -750,10 +809,38 @@
 		document.body.style.cursor = hovering ? 'pointer' : '';
 	}
 
+	function talkToColin() {
+		dismissHint();
+		openChat();
+	}
+
+	function dismissHint() {
+		hintVisible = false;
+		try {
+			localStorage.setItem(HINT_SEEN_KEY, '1');
+		} catch {
+			/* private mode — the hint simply shows again next visit */
+		}
+	}
+
 	function handleClick(event) {
 		if (updateHeadHover(event)) {
-			openChat();
+			talkToColin();
 		}
+	}
+
+	/** Pin the hint under the head, in screen space. */
+	function positionHint() {
+		if (!headHint || !head || !camera || !THREE) return;
+		if (!hintProjection) hintProjection = new THREE.Vector3();
+
+		head.getWorldPosition(hintProjection);
+		// A little below the chin, in world units, scaled with the head itself.
+		hintProjection.y -= getResponsiveScale() * 0.42;
+		hintProjection.project(camera);
+
+		headHint.style.left = `${(hintProjection.x * 0.5 + 0.5) * 100}%`;
+		headHint.style.top = `${(-hintProjection.y * 0.5 + 0.5) * 100}%`;
 	}
 
 	function animate() {
@@ -768,7 +855,12 @@
 			const headDriftX = Math.cos(time * 0.25 + headFloatOffset) * 0.05;
 			head.position.x = headDriftX;
 			head.position.y = headFloatY;
-			head.rotation.y = Math.PI + Math.sin(time * 0.2 + headFloatOffset) * 0.05;
+			pointerEased.x += (pointerTarget.x - pointerEased.x) * 0.045;
+			pointerEased.y += (pointerTarget.y - pointerEased.y) * 0.045;
+
+			head.rotation.y =
+				Math.PI + Math.sin(time * 0.2 + headFloatOffset) * 0.05 + pointerEased.x * LOOK_AMOUNT.x;
+			head.rotation.x = -pointerEased.y * LOOK_AMOUNT.y;
 			head.scale.setScalar(baseScale);
 		}
 
@@ -790,12 +882,25 @@
 			mesh.rotation.y = originalRotation.y + rotationWave * 0.1 * easedBlend;
 		});
 
+		positionHint();
 		renderer.render(scene, camera);
 	}
 </script>
 
 <section bind:this={heroSection} class="hero-section">
 	<canvas bind:this={canvas} class="webgl-canvas"></canvas>
+
+	{#if hintVisible}
+		<button
+			class="head-hint"
+			bind:this={headHint}
+			on:click={talkToColin}
+			aria-label="Talk to Colin's AI clone"
+		>
+			<span class="hint-dot"></span>
+			Click my head to talk to me
+		</button>
+	{/if}
 
 	<div class="hero-content">
 		<div class="name-wrapper">
@@ -807,9 +912,14 @@
 			</h1>
 		</div>
 
-		<a href="/cv/Colin_Salvatore_Nardo_MSci.pdf" target="_blank" rel="noopener noreferrer" class="cv-button">
-		View CV
-	</a>
+		<a
+			href="/cv/Colin_Salvatore_Nardo_MSci.pdf"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="cv-button"
+		>
+			View CV
+		</a>
 	</div>
 
 	<button class="scroll-indicator" on:click={scrollToProjects}>
@@ -845,6 +955,61 @@
 		z-index: 1;
 		pointer-events: auto;
 		opacity: 0;
+	}
+
+	.head-hint {
+		position: absolute;
+		z-index: 3;
+		transform: translate(-50%, 0);
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 0.9rem;
+		border: 1px solid var(--border-strong);
+		border-radius: 999px;
+		background: var(--overlay);
+		backdrop-filter: blur(6px);
+		color: var(--white);
+		font-family: var(--font-heading);
+		font-size: 0.78rem;
+		font-weight: 500;
+		letter-spacing: 0.04em;
+		white-space: nowrap;
+		cursor: pointer;
+		opacity: 0;
+	}
+
+	.head-hint:hover,
+	.head-hint:focus-visible {
+		border-color: var(--accent);
+		color: var(--accent-deep);
+	}
+
+	.hint-dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: var(--accent);
+		flex: none;
+		animation: hint-pulse 2.4s ease-in-out infinite;
+	}
+
+	@keyframes hint-pulse {
+		0%,
+		100% {
+			transform: scale(1);
+			opacity: 1;
+		}
+		50% {
+			transform: scale(1.5);
+			opacity: 0.45;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.hint-dot {
+			animation: none;
+		}
 	}
 
 	.hero-content {
@@ -925,7 +1090,9 @@
 		border-radius: 50%;
 		background: var(--accent);
 		transform: translate(-50%, -50%);
-		transition: width 0.6s var(--ease), height 0.6s var(--ease);
+		transition:
+			width 0.6s var(--ease),
+			height 0.6s var(--ease);
 		z-index: -1;
 	}
 
@@ -1079,6 +1246,11 @@
 	}
 
 	@media (max-width: 480px) {
+		.head-hint {
+			font-size: 0.7rem;
+			padding: 0.42rem 0.75rem;
+		}
+
 		.hero-content {
 			padding-right: 1rem;
 			padding-left: 1rem;
