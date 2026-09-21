@@ -18,12 +18,13 @@
 	];
 
 	const currentYear = new Date().getFullYear();
+
+	// Two identical halves so the -50% translation loops seamlessly.
+	const marqueeHalf = [0, 1, 2, 3];
 </script>
 
 <footer>
 	<div class="footer-content">
-		<p class="footer-name">COLIN SALVATORE NARDO</p>
-
 		<div class="footer-inner">
 			<div class="social-links">
 				{#each socials as social}
@@ -34,8 +35,17 @@
 						class="social-link"
 						aria-label={social.name}
 					>
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<path d={social.icon}/>
+						<svg
+							width="24"
+							height="24"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d={social.icon} />
 						</svg>
 					</a>
 				{/each}
@@ -46,41 +56,94 @@
 			</p>
 		</div>
 	</div>
+
+	<!-- Decorative: the name is already in the copyright above. -->
+	<div class="name-marquee" aria-hidden="true">
+		<div class="marquee-track">
+			{#each [0, 1] as half (half)}
+				{#each marqueeHalf as item (item)}
+					<span class="marquee-item">Colin Salvatore Nardo</span>
+				{/each}
+			{/each}
+		</div>
+	</div>
 </footer>
 
 <style>
 	footer {
+		/* The band is sized once here; the padding below reserves room for it. */
+		--marquee-size: clamp(3.5rem, 13vw, 11rem);
+		--marquee-visible: calc(var(--marquee-size) * 0.4);
+
 		position: relative;
-		padding: 6rem 2rem 2rem;
+		padding: 2rem 2rem calc(var(--marquee-visible) * 0.55 + 0.5rem);
 		background: transparent;
 		overflow: hidden;
 	}
 
 	.footer-content {
 		position: relative;
+		z-index: 1;
 		max-width: 1400px;
 		margin: 0 auto;
 	}
 
-	.footer-name {
-		margin: 0 0 clamp(1.5rem, 3vw, 3rem);
-		font-family: var(--font-heading);
-		font-size: clamp(4rem, 12vw, 13rem);
-		font-weight: 700;
-		line-height: 0.78;
-		text-align: center;
-		color: transparent;
-		-webkit-text-stroke: 1px var(--accent);
-		opacity: 0.7;
-	}
-
 	.footer-inner {
-		position: relative;
-		z-index: 1;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 2rem;
+		gap: 1.5rem;
+	}
+
+	/*
+	 * The name runs along the bottom edge, cut in half by it, and slides past
+	 * forever. It sits behind the icons and the copyright.
+	 */
+	.name-marquee {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 0;
+		height: var(--marquee-visible);
+		font-size: var(--marquee-size);
+		overflow: hidden;
+		pointer-events: none;
+		user-select: none;
+	}
+
+	.marquee-track {
+		display: flex;
+		width: max-content;
+		will-change: transform;
+		animation: marquee-slide 44s linear infinite;
+	}
+
+	.marquee-item {
+		font-family: var(--font-heading);
+		font-weight: 700;
+		line-height: 0.78;
+		letter-spacing: -0.01em;
+		white-space: nowrap;
+		padding-right: 0.3em;
+		color: transparent;
+		-webkit-text-stroke: 1px var(--accent);
+		opacity: 0.45;
+	}
+
+	@keyframes marquee-slide {
+		from {
+			transform: translateX(0);
+		}
+		to {
+			transform: translateX(-50%);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.marquee-track {
+			animation: none;
+		}
 	}
 
 	.social-links {
@@ -132,11 +195,15 @@
 
 	@media (max-width: 768px) {
 		footer {
-			padding: 3rem 1rem 1.5rem;
+			/* A proportionally taller band, and full clearance for the copyright —
+			   at phone sizes an overlap leaves it sitting inside the letterforms. */
+			--marquee-size: clamp(2.75rem, 17vw, 5rem);
+
+			padding: 1.5rem 1rem calc(var(--marquee-visible) + 0.5rem);
 		}
 
-		.footer-name {
-			margin-bottom: 1.25rem;
+		.footer-inner {
+			gap: 1.25rem;
 		}
 
 		.social-links {

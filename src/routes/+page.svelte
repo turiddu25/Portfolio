@@ -71,8 +71,8 @@
 
 <main>
 	<Hero />
-	<ProjectsSection projects={data.projects} />
 	<About />
+	<ProjectsSection projects={data.projects} />
 	<Footer />
 </main>
 

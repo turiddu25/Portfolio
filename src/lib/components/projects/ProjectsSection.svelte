@@ -51,7 +51,7 @@
 		position: relative;
 		z-index: 10;
 		background: transparent;
-		padding: clamp(5rem, 10vw, 9rem) 1.5rem;
+		padding: clamp(3.5rem, 7vw, 6rem) 1.5rem clamp(4rem, 8vw, 7rem);
 	}
 
 	.section-inner {
@@ -79,6 +79,5 @@
 		.projects-section {
 			padding: 4rem 1rem;
 		}
-
 	}
 </style>
