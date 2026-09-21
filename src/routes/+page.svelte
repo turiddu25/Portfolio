@@ -28,7 +28,7 @@
 <main>
 	<Hero />
 	<About />
-	<ProjectsSection projects={data.projects} cmsReachable={data.cmsReachable} />
+	<ProjectsSection projects={data.projects} cmsError={data.cmsError} />
 	<Footer />
 </main>
 

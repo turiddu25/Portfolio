@@ -5,7 +5,7 @@
 	import ProjectList from './ProjectList.svelte';
 
 	export let projects = [];
-	export let cmsReachable = true;
+	export let cmsError = '';
 
 	let section;
 
@@ -41,10 +41,13 @@
 
 		{#if projects.length}
 			<ProjectList {projects} />
-		{:else if cmsReachable}
-			<p class="empty">No projects found.</p>
+		{:else if cmsError}
+			<p class="empty">
+				Couldn't load projects from the CMS.
+				<span class="reason">{cmsError}</span>
+			</p>
 		{:else}
-			<p class="empty">Couldn't reach the CMS — projects will be back shortly.</p>
+			<p class="empty">No projects found.</p>
 		{/if}
 	</div>
 </section>
@@ -76,6 +79,14 @@
 	.empty {
 		color: var(--grey-soft);
 		padding: 3rem 0;
+	}
+
+	.reason {
+		display: block;
+		margin-top: 0.4rem;
+		font-family: monospace;
+		font-size: 0.8rem;
+		opacity: 0.65;
 	}
 
 	@media (max-width: 767px) {

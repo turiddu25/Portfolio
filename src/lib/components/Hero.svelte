@@ -475,6 +475,12 @@
 			});
 		}
 
+		gsap.fromTo(
+			'.hero-role',
+			{ opacity: 0, y: -8 },
+			{ opacity: 1, y: 0, duration: 1.2, delay: 0.9, ease: 'power2.out' }
+		);
+
 		// Animate scroll indicator
 		const scrollIndicator = document.querySelector('.scroll-indicator');
 		if (scrollIndicator) {
@@ -920,6 +926,8 @@
 		</button>
 	{/if}
 
+	<p class="hero-role">Senior Developer &amp; AI Engineer</p>
+
 	<div class="hero-content">
 		<div class="name-wrapper">
 			<h1 class="name-line name-line-1">Colin</h1>
@@ -974,6 +982,12 @@
 		z-index: 1;
 		pointer-events: auto;
 		opacity: 0;
+	}
+
+	/* Mobile only: the hero's top third is empty there, and the job is the
+	   first thing worth saying. On desktop the name column already fills it. */
+	.hero-role {
+		display: none;
 	}
 
 	.head-hint {
@@ -1231,6 +1245,24 @@
 	@media (max-width: 768px) {
 		.hero-section {
 			height: 100svh;
+		}
+
+		.hero-role {
+			display: block;
+			position: absolute;
+			top: max(1.75rem, env(safe-area-inset-top, 0px));
+			left: 1rem;
+			right: 1rem;
+			z-index: 3;
+			margin: 0;
+			text-align: center;
+			font-family: var(--font-heading);
+			font-size: clamp(0.72rem, 3.4vw, 0.95rem);
+			font-weight: 600;
+			letter-spacing: 0.14em;
+			text-transform: uppercase;
+			color: var(--grey-soft);
+			opacity: 0;
 		}
 
 		.hero-content {
